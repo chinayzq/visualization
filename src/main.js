@@ -5,7 +5,6 @@ import store from "./store"
 import * as filters from "./filters" // 全局过滤器
 import "./utils/permission"
 import ElementUI, { Message, MessageBox } from "element-ui"
-// import { loading } from "@jiaminghi/data-view"
 import "element-ui/lib/theme-chalk/index.css"
 import "./directive" // 自定义指令
 
