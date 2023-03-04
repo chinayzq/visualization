@@ -1,0 +1,11 @@
+{
+  "singleQuote": false,
+  "semi": false,
+  "bracketSpacing": true,
+  "htmlWhitespaceSensitivity": "ignore",
+  "javascript.format.insertSpaceBeforeFunctionParenthesis": true,
+  "files.insertFinalNewline": true,
+  "printWidth": 120,
+  "tabWidth": 2,
+  "no-multiple-empty-lines": true
+}
