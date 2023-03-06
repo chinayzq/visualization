@@ -432,3 +432,15 @@ export function deleteBindScenario(params) {
     data: params,
   })
 }
+
+/**
+ * 登录
+ * @param params
+ */
+export function loginRequest(params) {
+  return request({
+    url: `/api/sys-user/login`,
+    method: "post",
+    data: params,
+  })
+}
