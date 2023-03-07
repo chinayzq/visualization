@@ -27,7 +27,7 @@ module.exports = {
       .set("@pages", resolve("./src/view/pages"))
       .set("views", resolve("src/views"))
     config.plugin("html").tap((args) => {
-      args[0].title = "总控调度中心"
+      args[0].title = "组态软件平台"
       return args
     })
   },

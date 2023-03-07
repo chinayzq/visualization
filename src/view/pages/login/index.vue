@@ -101,15 +101,17 @@ export default {
           //   })
           //   .catch(function (err) {
           //     console.log(err)
-          //   })\
+          //   })
           this.loginLoading = true
           loginRequest(this.ruleForm2)
             .then((res) => {
               console.log("xxx", res)
-              if (res.code === 0) {
+              if (res.code === 200) {
                 this.$router.push({
                   path: "/",
                 })
+              } else {
+                this.$message.warning(res.msg)
               }
             })
             .catch(() => {

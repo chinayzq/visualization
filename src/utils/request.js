@@ -7,7 +7,6 @@ const service = axios.create({
   // 跨域携带cookie
   withCredentials: true,
 })
-service.defaults.headers["virtual-token"] = process.env.VUE_APP_TOKEN
 // response 拦截器
 service.interceptors.response.use(
   (response) => {

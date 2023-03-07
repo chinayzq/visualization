@@ -439,7 +439,7 @@ export function deleteBindScenario(params) {
  */
 export function loginRequest(params) {
   return request({
-    url: `/api/sys-user/login`,
+    url: `/api/sys-user/login?username=${params.username}&password=${params.password}`,
     method: "post",
     data: params,
   })
