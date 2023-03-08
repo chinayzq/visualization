@@ -114,7 +114,7 @@
 
 <script>
 import { deepClone } from "@/utils/utils.js"
-// import { addMeterial, modifyMeterial } from "@/api/ruge/iot/meterial/meterial";
+import { addMeterial, modifyMeterial } from "@/api"
 export default {
   name: "meterialDialogComponent",
   props: {
@@ -243,7 +243,6 @@ export default {
         name: "",
         catelog: "custom",
         status: true,
-        imageUrl: "",
         description: "",
       }
     },
@@ -260,14 +259,14 @@ export default {
             curForm.lastModifiedDate = ""
             curForm.updateByName = ""
             modifyMeterial(curForm).then((res) => {
-              this.$message.success("状态成功！")
+              this.$message.success("修改成功！")
               this.$emit("close")
               this.$emit("freshList")
             })
           } else {
             //   新增
             addMeterial(curForm).then((res) => {
-              if (res.code === 200 && res.msg === "新增成功") {
+              if (res.code === 200) {
                 this.$message.success("新增成功!")
                 this.$emit("close")
                 this.$emit("freshList")

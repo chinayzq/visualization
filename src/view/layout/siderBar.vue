@@ -1,5 +1,8 @@
 <template>
   <div class="sider-bar-component">
+    <div class="log-container">
+      <img src="@/assets/images/jm-logo.png" alt="" />
+    </div>
     <el-menu
       default-active="/material"
       class="el-menu-vertical-demo"
@@ -16,7 +19,7 @@
       </el-menu-item>
       <el-menu-item index="/visualization">
         <i class="el-icon-menu"></i>
-        <span slot="title">组态详情</span>
+        <span slot="title">组态列表</span>
       </el-menu-item>
     </el-menu>
   </div>
@@ -40,6 +43,18 @@ export default {
   height: 100%;
   ::v-deep .el-menu {
     height: 100%;
+  }
+  .log-container {
+    background: #545c64;
+    height: 65px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 199px;
+    img {
+      width: 139px;
+      height: 24px;
+    }
   }
 }
 </style>

@@ -7,6 +7,8 @@ const service = axios.create({
   // 跨域携带cookie
   withCredentials: true,
 })
+// Authorization =Bearer eyJhbGciOJlUzUxMiJ9.eyJpc3MiOiJqbWpuLnB1bHNliwiawQiOiixliw
+service.defaults.headers["Authorization"] = localStorage.getItem("visualization-token")
 // response 拦截器
 service.interceptors.response.use(
   (response) => {
@@ -41,7 +43,7 @@ service.interceptors.response.use(
       // });
     } else if (response.status === 405) {
       // 405:密码到期，需要强制修改密码;
-      router.replace({ path: "/" })
+      // router.replace({ path: "/" })
       // Message({
       //   message: res.errorMsg || response.status,
       //   type: 'warning',

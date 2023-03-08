@@ -5,6 +5,7 @@
         <SiderBar />
       </div>
       <div class="router-view-container">
+        <TopBar />
         <router-view />
       </div>
     </div>
@@ -13,10 +14,12 @@
 
 <script>
 import SiderBar from "./siderBar.vue"
+import TopBar from "./topBar.vue"
 export default {
   name: "viewIndex",
   components: {
     SiderBar,
+    TopBar,
   },
   watch: {
     $route: {

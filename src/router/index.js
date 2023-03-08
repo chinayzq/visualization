@@ -7,8 +7,8 @@ export default new Router({
   routes: [
     // 组态编辑页面
     {
-      path: "/visualization",
-      name: "visualization",
+      path: "/visualization/detail",
+      name: "visualizationDetail",
       component: () => import("@pages/visualization/detail"),
       hidden: true,
     },
@@ -29,6 +29,13 @@ export default new Router({
           path: "/material",
           name: "material",
           component: () => import("@pages/material"),
+          meta: {},
+          hidden: true,
+        },
+        {
+          path: "/visualization",
+          name: "visualization",
+          component: () => import("@pages/visualization"),
           meta: {},
           hidden: true,
         },

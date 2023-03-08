@@ -30,7 +30,8 @@
         <button id="delete-button">删除</button>
       </div>
     </div>
-    <el-dialog :visible="saveDialog.saveDialogShow" :title="saveDialog.title">
+    <!-- 保存弹窗 -->
+    <el-dialog :visible="saveDialog.saveDialogShow" append-to-body :title="saveDialog.title">
       <el-form :model="saveDialog" ref="chartForm" :rules="scenceRules" label-width="100px">
         <el-form-item label="场景名称" prop="name">
           <el-input v-model="saveDialog.name" auto-complete="off" placeholder="请输入场景名称"></el-input>
@@ -59,11 +60,7 @@ import asideMenu from "./asideMenu.vue"
 import detailProps from "./detailProps.vue"
 import { konvaMixins } from "@/mixins/konvaMixins.js"
 import Konva from "konva"
-// import {
-//   getVisualizationDetail,
-//   addVisualization,
-//   modifyVisualization,
-// } from "@/api/ruge/iot/visualization/visualization";
+import { getVisualizationDetail, addVisualization, modifyVisualization } from "@/api"
 export default {
   components: {
     topBar,
@@ -110,7 +107,6 @@ export default {
           },
         ],
       },
-      curEditObj: {},
     }
   },
   watch: {
@@ -227,13 +223,12 @@ export default {
     getGraphicalDatas(id) {
       this.graphLoading = true
       getVisualizationDetail(id).then((res) => {
-        if (res && res.detail) {
-          this.curEditObj = res
-          const { basicData, detail } = res
+        if (res && res.data) {
+          const { basicData, detail } = res.data
           const displayDatas = JSON.parse(JSON.parse(detail))
           this.displayHandler(basicData, displayDatas)
-          this.saveDialog.name = res.name
-          this.saveDialog.description = res.description
+          this.saveDialog.name = res.data.name
+          this.saveDialog.description = res.data.description
         } else {
           this.$message.warning("获取场景失败！")
         }
@@ -288,8 +283,6 @@ export default {
         params.lastModifiedBy = ""
         params.lastModifiedDate = ""
         params.updateByName = ""
-        params.createBy = this.curEditObj.createBy
-        params.createdDate = this.curEditObj.createdDate
       }
       // 存储背景图片信息
       params.basicData = JSON.stringify({

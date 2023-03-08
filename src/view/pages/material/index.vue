@@ -40,11 +40,7 @@
 <script>
 import finalTable from "@/components/FinalTable"
 import meterialDialogComponent from "./meterialDialog.vue"
-// import {
-//   getMeterialList,
-//   deleteMeterial,
-//   modifyMeterial,
-// } from "@/api/ruge/iot/meterial/meterial";
+import { getMaterialList, deleteMaterial } from "@/api"
 import { deepClone } from "@/utils/utils.js"
 export default {
   name: "meterialList",
@@ -96,26 +92,6 @@ export default {
           {
             prop: "description",
             label: "描述",
-            width: "",
-          },
-          {
-            prop: "createdDate",
-            label: "创建时间",
-            width: "",
-          },
-          {
-            prop: "createByName",
-            label: "创建人",
-            width: "",
-          },
-          {
-            prop: "lastModifiedDate",
-            label: "更新时间",
-            width: "",
-          },
-          {
-            prop: "updateByName",
-            label: "更新人",
             width: "",
           },
           { prop: "status", label: "启用状态", width: "" },
@@ -171,8 +147,11 @@ export default {
             },
           },
           status: {
-            type: "switch",
-            actionType: "switchEvent",
+            type: "enumerationColumn",
+            emuList: {
+              ENABLE: "启用",
+              DIASABLE: "禁用",
+            },
           },
           createdDate: {
             type: "dateFormat",
@@ -222,7 +201,7 @@ export default {
         },
       },
       listQuery: {
-        page: 0,
+        page: 1,
         size: 10,
         catelog: null,
         name: null,
@@ -251,36 +230,38 @@ export default {
     getListData() {
       this.tableLoading = true
       const requestParams = { ...this.listQuery }
-      // getMeterialList(requestParams)
-      //   .then((res) => {
-      //     if (res && res.content && res.content.length > 0) {
-      //       let resultList = res.content
-      //       resultList.forEach((item) => {
-      //         item.status = item.status ? "ENABLE" : "DIASABLE"
-      //       })
-      //       this.dataset.pageVO.total = res.totalElements
-      //       this.dataset.tableData = resultList
-      //     } else {
-      //       this.dataset.pageVO.total = 0
-      //       this.dataset.tableData = []
-      //     }
-      //     this.tableLoading = false
-      //   })
-      //   .catch(() => {
-      //     this.tableLoading = false
-      //   })
-      this.tableLoading = false
+      getMaterialList(requestParams)
+        .then((res) => {
+          if (res && res.code === 200) {
+            let resultList = res.data.records || []
+            resultList.forEach((item) => {
+              item.status = item.status ? "ENABLE" : "DIASABLE"
+            })
+            this.dataset.pageVO.total = res.data.total
+            this.dataset.tableData = resultList
+          } else {
+            this.dataset.pageVO.total = 0
+            this.dataset.tableData = []
+          }
+        })
+        .finally(() => {
+          this.tableLoading = false
+        })
     },
-    deleteHandler(row) {
+    deleteHandler({ id }) {
       this.$confirm("确定要删除吗?", "警告", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
         type: "warning",
       })
         .then(() => {
-          deleteMeterial(row.id).then((res) => {
-            this.$message.success("删除记录成功！")
-            this.getListData()
+          deleteMaterial(id).then((res) => {
+            if (res.code === 200) {
+              this.$message.success("删除记录成功！")
+              this.getListData()
+            } else {
+              this.$message.warning("删除失败！")
+            }
           })
         })
         .catch((error) => {
@@ -290,14 +271,12 @@ export default {
     tableEventHandler(datas) {
       if (datas.type === "goSearch") {
         this.listQuery = { ...this.listQuery, ...datas.params }
-        this.listQuery.page = 0
+        this.listQuery.page = 1
         this.getListData()
       } else if (datas.type === "paginationChange") {
-        this.listQuery.page = datas.params.current.page - 1
+        this.listQuery.page = datas.params.current.page
         this.listQuery.size = datas.params.current.limit
         this.getListData()
-      } else if (datas.type === "switchEvent") {
-        this.statusChange(datas.row)
       } else if (datas.type === "iconClick") {
         switch (datas.eventName) {
           case "edit":
@@ -308,14 +287,6 @@ export default {
             break
         }
       }
-    },
-    statusChange(row) {
-      let curRow = { ...row }
-      curRow.status = row.status === "ENABLE" ? true : false
-      modifyMeterial(curRow).then((res) => {
-        this.$message.success("状态修改成功！")
-        this.getListData()
-      })
     },
   },
 }

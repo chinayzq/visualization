@@ -48,6 +48,7 @@
 </template>
 <script>
 import { loginRequest } from "@/api"
+import request from "@/utils/request"
 export default {
   data() {
     return {
@@ -105,8 +106,9 @@ export default {
           this.loginLoading = true
           loginRequest(this.ruleForm2)
             .then((res) => {
-              console.log("xxx", res)
               if (res.code === 200) {
+                request.defaults.headers["Authorization"] = `Bearer ${res.data.token}`
+                localStorage.setItem("visualization-token", `Bearer ${res.data.token}`)
                 this.$router.push({
                   path: "/",
                 })
