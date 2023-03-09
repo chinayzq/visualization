@@ -2,11 +2,7 @@
   <div class="props_setting_container">
     <el-tabs v-model="activeName">
       <el-tab-pane label="外观" name="props">
-        <el-form
-          label-position="top"
-          label-width="100%"
-          :model="formLabelAlign"
-        >
+        <el-form label-position="top" label-width="100%" :model="formLabelAlign">
           <div v-show="currentActiveShape">
             <el-row :gutter="24">
               <el-col :span="12">
@@ -29,9 +25,6 @@
                   ></el-input-number>
                 </el-form-item>
               </el-col>
-            </el-row>
-
-            <el-row :gutter="24">
               <el-col :span="12">
                 <el-form-item label="宽(px)">
                   <el-input-number
@@ -52,35 +45,28 @@
                   ></el-input-number>
                 </el-form-item>
               </el-col>
-            </el-row>
-
-            <el-row :gutter="24">
               <el-col :span="12">
                 <el-form-item label="旋转(°)">
                   <el-input-number
                     v-model="formLabelAlign.rotation"
                     controls-position="right"
                     size="small"
-                    @change="
-                      formItemChange('rotation', formLabelAlign.rotation)
-                    "
+                    @change="formItemChange('rotation', formLabelAlign.rotation)"
                   ></el-input-number>
                 </el-form-item>
               </el-col>
             </el-row>
-            <!-- <el-row :gutter="24">
-                  <el-col :span="12">
-                    <el-form-item label="文字内容">
-                      <el-input
-                        type="textarea"
-                        v-model="formLabelAlign.text"
-                        controls-position="right"
-                        size="small"
-                        @change="formItemChange('text', formLabelAlign.text)"
-                      ></el-input>
-                    </el-form-item>
-                  </el-col>
-                </el-row> -->
+            <el-row>
+              <el-form-item label="文字内容">
+                <el-input
+                  type="textarea"
+                  v-model="formLabelAlign.text"
+                  controls-position="right"
+                  size="small"
+                  @change="formItemChange('text', formLabelAlign.text)"
+                ></el-input>
+              </el-form-item>
+            </el-row>
           </div>
           <!-- 设置背景图片宽，高 -->
           <div v-show="!currentActiveShape">
@@ -110,20 +96,13 @@
           <el-row :gutter="24">
             <el-col :span="24">
               <el-form-item label="背景图片">
-                <div
-                  class="background_img_container"
-                  v-show="formLabelAlign.backgroundImage"
-                >
+                <div class="background_img_container" v-show="formLabelAlign.backgroundImage">
                   <div class="hover_tips">
                     <i class="el-icon-delete" @click="deleteImage"></i>
                   </div>
                   <img :src="formLabelAlign.backgroundImage" alt="" />
                 </div>
-                <el-upload
-                  action="#"
-                  :show-file-list="false"
-                  :http-request="imageUploadHandler"
-                >
+                <el-upload action="#" :show-file-list="false" :http-request="imageUploadHandler">
                   <el-button type="primary">上传背景图片</el-button>
                 </el-upload>
               </el-form-item>
@@ -131,13 +110,13 @@
           </el-row>
         </el-form>
       </el-tab-pane>
-      <el-tab-pane label="数据" name="second"> 数据配置 </el-tab-pane>
+      <el-tab-pane label="数据" name="second">数据配置</el-tab-pane>
     </el-tabs>
   </div>
 </template>
 
 <script>
-import { deepClone } from "@/utils/utils.js";
+import { deepClone } from "@/utils/utils.js"
 export default {
   name: "visualizationPropsDetail",
   props: ["currentActiveShape", "currentActiveProps"],
@@ -153,18 +132,18 @@ export default {
         backgroundImage: "",
         text: "",
       },
-    };
+    }
   },
   watch: {
     currentActiveProps: {
       handler(val) {
-        this.formLabelAlign = { ...val };
-        let { x, y, height, width, rotation } = this.formLabelAlign;
-        this.formItemChange("x", x);
-        this.formItemChange("y", y);
-        this.formItemChange("height", height);
-        this.formItemChange("width", width);
-        this.formItemChange("rotation", rotation);
+        this.formLabelAlign = { ...val }
+        let { x, y, height, width, rotation } = this.formLabelAlign
+        this.formItemChange("x", x)
+        this.formItemChange("y", y)
+        this.formItemChange("height", height)
+        this.formItemChange("width", width)
+        this.formItemChange("rotation", rotation)
       },
       deep: true,
     },
@@ -175,42 +154,45 @@ export default {
         // 给节点设置
         switch (type) {
           case "x":
-            this.currentActiveShape.x(value);
-            break;
+            this.currentActiveShape.x(value)
+            break
           case "y":
-            this.currentActiveShape.y(value);
-            break;
+            this.currentActiveShape.y(value)
+            break
           case "height":
-            this.currentActiveShape.height(value);
-            break;
+            this.currentActiveShape.height(value)
+            break
           case "width":
-            this.currentActiveShape.width(value);
-            break;
+            this.currentActiveShape.width(value)
+            break
           case "rotation":
-            this.currentActiveShape.rotation(value);
-            break;
+            this.currentActiveShape.rotation(value)
+            break
+          case "text":
+            this.currentActiveShape.text(value)
+            break
         }
       } else {
         // 给背景设置
-        this.$emit("setBackground", { type, datas: value });
+        this.$emit("setBackground", { type, datas: value })
       }
     },
     imageUploadHandler(data) {
       this.getBase64(data.file).then((resBase64) => {
         if (this.currentActiveShape) {
-          const imageObj = new window.Image();
-          imageObj.src = resBase64;
+          const imageObj = new window.Image()
+          imageObj.src = resBase64
           imageObj.onload = () => {
-            console.log("this.currentActiveShape", this.currentActiveShape);
-            this.currentActiveShape.fillPatternImage(imageObj);
-          };
-          this.formLabelAlign.backgroundImage = resBase64;
-          this.currentActiveShape.attrs.backgroundImage = resBase64;
+            console.log("this.currentActiveShape", this.currentActiveShape)
+            this.currentActiveShape.fillPatternImage(imageObj)
+          }
+          this.formLabelAlign.backgroundImage = resBase64
+          this.currentActiveShape.attrs.backgroundImage = resBase64
         } else {
           this.$emit("setBackground", {
             type: "image",
             datas: resBase64,
-          });
+          })
         }
         // 设置图片并设置默认宽高的尺寸
         // _this.formLabelAlign.backgroundImage = resBase64;
@@ -229,46 +211,46 @@ export default {
         //   _this.basicBackground = resBase64;
         // }
         // _this.$message.success("图片设置成功！");
-      });
+      })
     },
     getBase64(file) {
       return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        let fileResult = "";
-        reader.readAsDataURL(file);
+        const reader = new FileReader()
+        let fileResult = ""
+        reader.readAsDataURL(file)
         // 开始转换
         reader.onload = () => {
-          fileResult = reader.result;
-        };
+          fileResult = reader.result
+        }
         // 转失败
         reader.onerror = (error) => {
-          reject(error);
-        };
+          reject(error)
+        }
         // 转结束
         reader.onloadend = () => {
-          resolve(fileResult);
-        };
-      });
+          resolve(fileResult)
+        }
+      })
     },
     deleteImage() {
-      const _this = this;
-      console.log("this.currentActiveShape", this.currentActiveShape);
+      const _this = this
+      console.log("this.currentActiveShape", this.currentActiveShape)
       if (this.currentActiveShape) {
-        let temp = deepClone(this.resultList);
+        let temp = deepClone(this.resultList)
         temp.forEach((item) => {
           if (item.id === _this.currentActiveShape) {
-            item.nodeStyle.backgroundImage = "";
+            item.nodeStyle.backgroundImage = ""
           }
-        });
-        this.chartData.nodes = deepClone(temp);
-        this.resultList = deepClone(temp);
+        })
+        this.chartData.nodes = deepClone(temp)
+        this.resultList = deepClone(temp)
       } else {
-        this.basicBackground = "";
+        this.basicBackground = ""
       }
-      this.formLabelAlign.backgroundImage = "";
+      this.formLabelAlign.backgroundImage = ""
     },
   },
-};
+}
 </script>
 
 <style scoped lang="less">

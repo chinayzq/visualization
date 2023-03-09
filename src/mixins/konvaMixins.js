@@ -1,4 +1,4 @@
-import Konva from 'konva';
+// import Konva from 'konva';
 export const konvaMixins = {
   methods: {
     initKonvaStage(container, width, height) {
@@ -6,24 +6,24 @@ export const konvaMixins = {
         container,
         width,
         height,
-      });
+      })
     },
     initLayer() {
-      return new Konva.Layer();
+      return new Konva.Layer()
     },
     addLayerToStage(stage, layer) {
-      stage.add(layer);
+      stage.add(layer)
     },
     Transformer(node) {
       return new Konva.Transformer({
         node,
-      });
+      })
     },
     /**
      * 生成一个用不重复的ID
      */
     GenNonDuplicateID() {
-      return Date.now().toString(36);
+      return Date.now().toString(36)
     },
   },
-};
+}

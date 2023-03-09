@@ -41,6 +41,7 @@
           :data-backgroundImage="item.backgroundImage"
           :data-index="item.index"
           :data-text="item.text"
+          :data-item="JSON.stringify(item)"
         >
           <el-tooltip :content="item.name" placement="bottom" effect="light">
             <i :style="{ backgroundImage: 'url(' + item.icon + ')' }"></i>
@@ -56,14 +57,14 @@
 </template>
 
 <script>
-// import { getMeterialList } from "@/api/ruge/iot/meterial/meterial";
+import { getMaterialList } from "@/api"
 import officialMeterial from "./officialMeterial.js"
 export default {
   name: "visualizationAsideMenu",
   data() {
     return {
       leftMenuList: [
-        { name: "官方", count: 0, type: "basic" },
+        { name: "基础库", count: 0, type: "basic" },
         { name: "自定义", count: 0, type: "custom" },
       ],
       MenuList: {},
@@ -91,37 +92,37 @@ export default {
         size: 1000,
       }
       // 获取素材库数据
-      // getMeterialList(requestParams).then((res) => {
-      //   this.MenuList = {};
-      //   let tempObj = {};
-      //   res.content.forEach((item) => {
-      //     // 过滤无效状态的数据
-      //     if (!item.status) return;
-      //     if (!tempObj[item.catelog]) {
-      //       tempObj[item.catelog] = [];
-      //     }
-      //     const detail = JSON.parse(item.detail);
-      //     tempObj[item.catelog].push({
-      //       detail,
-      //       icon: detail.statusList[detail.default],
-      //       name: item.name,
-      //       busiType: "basicComponent",
-      //       nodeType: "text",
-      //       height: 100,
-      //       width: 100,
-      //       rotate: 0,
-      //       top: 0,
-      //       left: 0,
-      //       index: 0,
-      //       backgroundImage: "",
-      //     });
-      //   });
-      //   this.MenuList = tempObj;
-      this.initOfficialMeterial()
-      // this.leftMenuList.forEach((item) => {
-      //   item.count = tempObj[item.type] ? tempObj[item.type].length : 0;
-      // });
-      // });
+      getMaterialList(requestParams).then((res) => {
+        this.MenuList = {}
+        let tempObj = {}
+        res.data.records.forEach((item) => {
+          // 过滤无效状态的数据
+          if (!item.status) return
+          if (!tempObj[item.catelog]) {
+            tempObj[item.catelog] = []
+          }
+          const detail = JSON.parse(item.detail)
+          tempObj[item.catelog].push({
+            detail,
+            icon: detail.statusList[detail.default],
+            name: item.name,
+            busiType: "basicComponent",
+            nodeType: "text",
+            height: 100,
+            width: 100,
+            rotate: 0,
+            top: 0,
+            left: 0,
+            index: 0,
+            backgroundImage: "",
+          })
+        })
+        this.MenuList = tempObj
+        this.initOfficialMeterial()
+        this.leftMenuList.forEach((item) => {
+          item.count = tempObj[item.type] ? tempObj[item.type].length : 0
+        })
+      })
     },
     initOfficialMeterial() {
       this.MenuList["basic"] = officialMeterial

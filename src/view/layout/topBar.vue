@@ -7,11 +7,13 @@
 </template>
 
 <script>
+import request from "@/utils/request"
 export default {
   name: "topBarComponent",
   methods: {
     logoutHandler() {
       localStorage.removeItem("visualization-token")
+      delete request.defaults.headers["Authorization"]
       this.$router.push("/login")
     },
   },

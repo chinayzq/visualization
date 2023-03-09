@@ -12,6 +12,17 @@ service.defaults.headers["Authorization"] = localStorage.getItem("visualization-
 // response 拦截器
 service.interceptors.response.use(
   (response) => {
+    const { code } = response.data || {}
+    const { path, fullPath } = router.currentRoute
+    if (code === 403) {
+      if (path !== "/login") {
+        // 跳转登录页面
+        router.replace({
+          path: "/login",
+          query: { redirect: fullPath }, //登录成功后跳入浏览的当前页面
+        })
+      }
+    }
     return response.data
   },
   (error) => {

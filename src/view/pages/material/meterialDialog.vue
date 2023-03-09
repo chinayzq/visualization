@@ -152,9 +152,9 @@ export default {
     },
   },
   data() {
-    var validateImageData = (rule, value, callback) => {
-      if (value === "") {
-        callback(new Error("请上传图片"))
+    var validateDefaultStatus = (rule, value, callback) => {
+      if (!this.defaultStatus) {
+        callback(new Error("请选择默认状态"))
       } else {
         callback()
       }
@@ -177,6 +177,8 @@ export default {
         // imageUrl: [
         //   { required: true, validator: validateImageData, trigger: "blur" },
         // ],
+        defaultStatus: [{ required: true, validator: validateDefaultStatus, trigger: ["blur", "change"] }],
+
         desc: [{ required: true, message: "请填写活动形式", trigger: "blur" }],
       },
     }

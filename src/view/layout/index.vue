@@ -48,6 +48,7 @@ export default {
   .main-container {
     display: flex;
     height: 100%;
+    overflow: hidden;
     .sider-bar-container {
       width: 200px;
     }

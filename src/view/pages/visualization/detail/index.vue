@@ -59,7 +59,8 @@ import topBar from "./topBar.vue"
 import asideMenu from "./asideMenu.vue"
 import detailProps from "./detailProps.vue"
 import { konvaMixins } from "@/mixins/konvaMixins.js"
-import Konva from "konva"
+import lodash from "lodash"
+// import Konva from "konva"
 import { getVisualizationDetail, addVisualization, modifyVisualization } from "@/api"
 export default {
   components: {
@@ -374,7 +375,7 @@ export default {
       // 初始化click&拖拽事件
       this.initClickHandler(this.stage)
       // 初始化dbclick双击事件
-      this.initDBClickHandler(this.stage)
+      // this.initDBClickHandler(this.stage)
       // 初始化右键菜单事件
       this.initContextMenu(this.stage)
       // 滚轮滚动事件
@@ -604,44 +605,114 @@ export default {
         //我们可以手动注册：
         this.stage.setPointersPositions(e)
         // 获取当前拖动图片的icon
-        const { icon, nodetype, text, height, width } = this.currentDragItem
-        console.log("this.currentDragItem", this.currentDragItem)
+        const { icon, nodetype, text, height, width, item } = this.currentDragItem
+        const currentItem = JSON.parse(item)
+        console.log("this.currentDragItem", currentItem.icon)
         if (nodetype === "textEditor") {
-          // 测试 start
           const textNode = new Konva.Text({
-            text: "Some text here",
             nodeType: "textEditor",
             fontSize: 14,
             text,
+            index: 2,
+            rotation: 0,
             draggable: true,
+            fill: "#000000",
+            shadowColor: "red",
             height: Number(height),
             width: Number(width),
           })
+          const box = new Konva.Rect({
+            x: textNode.x(),
+            y: textNode.y(),
+            stroke: "#ff00000",
+            index: 1,
+            width: textNode.width(),
+            height: textNode.height(),
+            draggable: true,
+          })
+          textNode.setZIndex(2)
+          box.setZIndex(1)
+          textNode.on("dragmove transform", () => {
+            box.setAttrs({
+              x: textNode.x(),
+              y: textNode.y(),
+              scaleX: textNode.scaleX(),
+              scaleY: textNode.scaleY(),
+            })
+          })
+          this.layer.add(box)
           this.layer.add(textNode)
+          box.on("dragmove transform", () => {
+            textNode.setAttrs({
+              x: box.x(),
+              y: box.y(),
+              scaleX: box.scaleX(),
+              scaleY: box.scaleY(),
+            })
+          })
           textNode.position(this.stage.getPointerPosition())
-          this.tr.nodes([textNode])
+          box.position(this.stage.getPointerPosition())
+          // this.tr.nodes([textNode])
           this.layer.draw()
-          // 测试 end
+        } else if (nodetype === "borderTextEditor") {
+          var rect = new Konva.Rect({
+            width: 100,
+            height: 50,
+            fill: "red",
+            stroke: "black",
+            strokeWidth: 5,
+          })
         } else {
-          // 初始化image对象
-          const imageObj = new window.Image()
-          imageObj.src = icon
-          imageObj.onload = () => {
+          if (currentItem.icon.includes("data:image/gif")) {
+            const canvas = document.createElement("canvas")
+            const that = this
+            canvas.width = 100
+            canvas.height = 100
+            function onDrawFrame(ctx, frame) {
+              // lodash.debounce((e) => {
+              ctx.drawImage(frame.buffer, 0, 0, 100, 100)
+              that.layer.draw()
+              // }, 100)
+            }
+            // gifler("@/assets/images/gufengji.gif").frames(canvas, onDrawFrame)
+            gifler(currentItem.icon).frames(canvas, onDrawFrame)
             const Image = new Konva.Image({
+              image: canvas,
               height: 100,
               width: 100,
               radius: 50,
-              image: imageObj,
-              icon,
+              icon: currentItem.icon,
               draggable: true,
-              id: this.GenNonDuplicateID(),
+              id: that.GenNonDuplicateID(),
               index: 1,
               rotation: 0,
               backgroundImage: "",
             })
-            this.layer.add(Image)
-            Image.position(this.stage.getPointerPosition())
-            this.layer.draw()
+            console.log("xxxxxxxx2")
+            that.layer.add(Image)
+            Image.position(that.stage.getPointerPosition())
+            that.layer.draw()
+          } else {
+            // 初始化image对象
+            const imageObj = new window.Image()
+            imageObj.src = currentItem.icon
+            imageObj.onload = () => {
+              const Image = new Konva.Image({
+                height: 100,
+                width: 100,
+                radius: 50,
+                image: imageObj,
+                icon,
+                draggable: true,
+                id: this.GenNonDuplicateID(),
+                index: 1,
+                rotation: 0,
+                backgroundImage: "",
+              })
+              this.layer.add(Image)
+              Image.position(this.stage.getPointerPosition())
+              this.layer.draw()
+            }
           }
         }
       })
