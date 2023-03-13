@@ -4,7 +4,7 @@
       <img src="@/assets/images/jm-logo.png" alt="" />
     </div>
     <el-menu
-      default-active="/material"
+      :default-active="defaultActive"
       class="el-menu-vertical-demo"
       :router="true"
       @open="handleOpen"
@@ -21,6 +21,10 @@
         <i class="el-icon-menu"></i>
         <span slot="title">组态列表</span>
       </el-menu-item>
+      <el-menu-item index="/dynamicAddress">
+        <i class="el-icon-menu"></i>
+        <span slot="title">动态地址</span>
+      </el-menu-item>
     </el-menu>
   </div>
 </template>
@@ -29,7 +33,17 @@
 export default {
   name: "siderBarComponent",
   data() {
-    return {}
+    return {
+      defaultActive: "/material",
+    }
+  },
+  watch: {
+    $route: {
+      handler(route) {
+        this.defaultActive = route.path
+      },
+      immediate: true,
+    },
   },
   methods: {
     handleOpen() {},

@@ -239,4 +239,45 @@ body {
 .app-container {
   height: calc(100% - 65px);
   overflow: auto;
+  padding: 32px 24px;
+}
+
+.filter-line {
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  button {
+    height: 36px;
+  }
+  .icon-loudoutu {
+    font-size: 12px;
+  }
+  .header-filter-button {
+    cursor: pointer;
+    width: 84px;
+    height: 36px;
+    line-height: 36px;
+    text-align: center;
+    border-radius: 3px;
+    font-size: 14px;
+    font-family: PingFangSC-Regular, PingFang SC;
+    font-weight: 400;
+  }
+  .filter-button-open {
+    color: #409eff;
+    background: #ecf5ff;
+    border: 1px solid #c6e2ff;
+  }
+  .filter-button-close {
+    color: #2a4158;
+    background: #ffffff;
+    border: 1px solid #e7e8eb;
+  }
+  .not-allowed-button {
+    cursor: not-allowed;
+    background-color: #fef0f0;
+    border-color: #fde2e2;
+    color: #f9a7a7;
+  }
 }

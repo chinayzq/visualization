@@ -39,6 +39,13 @@ export default new Router({
           meta: {},
           hidden: true,
         },
+        {
+          path: "/dynamicAddress",
+          name: "dynamicAddress",
+          component: () => import("@pages/dynamicAddress/index"),
+          meta: {},
+          hidden: true,
+        },
       ],
     },
   ],

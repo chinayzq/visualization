@@ -181,7 +181,7 @@ export default {
     },
     updateRule(row) {
       const { origin, pathname } = window.location
-      const url = `${origin}${pathname}#/visualization/detail?layout=hide&id=${row.id}`
+      const url = `${origin}${pathname}#/visualization/detail?id=${row.id}`
       window.open(url, "_blank")
     },
     getListData() {
@@ -205,7 +205,7 @@ export default {
     },
     createVisualization() {
       const { origin, pathname } = window.location
-      const url = `${origin}${pathname}#/visualization/detail?layout=hide`
+      const url = `${origin}${pathname}#/visualization/detail`
       window.open(url, "_blank")
     },
   },

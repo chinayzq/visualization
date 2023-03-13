@@ -1,5 +1,5 @@
 <template>
-  <div class="visualization_detail_comp" v-loading="graphLoading">
+  <div class="visualization_detail_comp">
     <topBar v-show="!previewFlag" :scale="scale" @graphEvent="graphEvent" />
     <div v-show="previewFlag" class="preview_bar">
       <div>预览</div>
@@ -13,7 +13,14 @@
       <div class="menu_container" v-show="!previewFlag">
         <asideMenu @setCurrentDragItem="setCurrentDragItem" />
       </div>
-      <div class="stage_container" id="stage_container"></div>
+      <div
+        class="stage_container"
+        id="stage_container"
+        v-loading="graphLoading"
+        element-loading-text="场景加载中..."
+        element-loading-spinner="el-icon-loading"
+        element-loading-background="rgba(0, 0, 0, 0.3)"
+      ></div>
       <div class="props_container" v-show="!previewFlag">
         <detailProps
           :currentActiveShape="currentActiveShape"
@@ -227,6 +234,8 @@ export default {
         if (res && res.data) {
           const { basicData, detail } = res.data
           const displayDatas = JSON.parse(JSON.parse(detail))
+          console.log("displayDatas1", displayDatas)
+          console.log("displayDatas2", basicData)
           this.displayHandler(basicData, displayDatas)
           this.saveDialog.name = res.data.name
           this.saveDialog.description = res.data.description
@@ -609,6 +618,23 @@ export default {
         const currentItem = JSON.parse(item)
         console.log("this.currentDragItem", currentItem.icon)
         if (nodetype === "textEditor") {
+          // 纯展示文本框
+          const textNode = new Konva.Text({
+            nodeType: "textEditor",
+            fontSize: 14,
+            text,
+            index: 2,
+            rotation: 0,
+            draggable: true,
+            fill: "#ffffff",
+            height: Number(height),
+            width: Number(width),
+          })
+          this.layer.add(textNode)
+          textNode.position(this.stage.getPointerPosition())
+          this.layer.draw()
+        } else if (nodetype === "valueTextEditor") {
+          // 带有边框，能更新数值的文本框
           const textNode = new Konva.Text({
             nodeType: "textEditor",
             fontSize: 14,
@@ -654,14 +680,6 @@ export default {
           box.position(this.stage.getPointerPosition())
           // this.tr.nodes([textNode])
           this.layer.draw()
-        } else if (nodetype === "borderTextEditor") {
-          var rect = new Konva.Rect({
-            width: 100,
-            height: 50,
-            fill: "red",
-            stroke: "black",
-            strokeWidth: 5,
-          })
         } else {
           if (currentItem.icon.includes("data:image/gif")) {
             const canvas = document.createElement("canvas")
