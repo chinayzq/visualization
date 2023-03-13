@@ -9,7 +9,7 @@
                 <el-form-item label="X(px)">
                   <el-input-number
                     v-model="formLabelAlign.x"
-                    @change="formItemChange('x', formLabelAlign.x)"
+                    @input="formItemChange('x', formLabelAlign.x)"
                     controls-position="right"
                     size="small"
                   ></el-input-number>
@@ -19,7 +19,7 @@
                 <el-form-item label="Y(px)">
                   <el-input-number
                     v-model="formLabelAlign.y"
-                    @change="formItemChange('y', formLabelAlign.y)"
+                    @input="formItemChange('y', formLabelAlign.y)"
                     controls-position="right"
                     size="small"
                   ></el-input-number>
@@ -29,7 +29,7 @@
                 <el-form-item label="宽(px)">
                   <el-input-number
                     v-model="formLabelAlign.width"
-                    @change="formItemChange('width', formLabelAlign.width)"
+                    @input="formItemChange('width', formLabelAlign.width)"
                     controls-position="right"
                     size="small"
                   ></el-input-number>
@@ -39,7 +39,7 @@
                 <el-form-item label="高(px)">
                   <el-input-number
                     v-model="formLabelAlign.height"
-                    @change="formItemChange('height', formLabelAlign.height)"
+                    @input="formItemChange('height', formLabelAlign.height)"
                     controls-position="right"
                     size="small"
                   ></el-input-number>
@@ -51,7 +51,7 @@
                     v-model="formLabelAlign.rotation"
                     controls-position="right"
                     size="small"
-                    @change="formItemChange('rotation', formLabelAlign.rotation)"
+                    @input="formItemChange('rotation', formLabelAlign.rotation)"
                   ></el-input-number>
                 </el-form-item>
               </el-col>
@@ -63,7 +63,7 @@
                   v-model="formLabelAlign.text"
                   controls-position="right"
                   size="small"
-                  @change="formItemChange('text', formLabelAlign.text)"
+                  @input="formItemChange('text', formLabelAlign.text)"
                 ></el-input>
               </el-form-item>
             </el-row>
@@ -75,7 +75,7 @@
                 <el-form-item label="宽">
                   <el-input-number
                     v-model="formLabelAlign.width"
-                    @change="formItemChange('width', formLabelAlign.width)"
+                    @input="formItemChange('width', formLabelAlign.width)"
                     controls-position="right"
                     size="small"
                   ></el-input-number>
@@ -85,7 +85,7 @@
                 <el-form-item label="高">
                   <el-input-number
                     v-model="formLabelAlign.height"
-                    @change="formItemChange('height', formLabelAlign.height)"
+                    @input="formItemChange('height', formLabelAlign.height)"
                     controls-position="right"
                     size="small"
                   ></el-input-number>
@@ -110,7 +110,22 @@
           </el-row>
         </el-form>
       </el-tab-pane>
-      <el-tab-pane label="数据" name="second">数据配置</el-tab-pane>
+      <el-tab-pane label="数据" name="second">
+        <el-form label-position="top" label-width="100%" :model="dataForm">
+          <el-row :gutter="24">
+            <el-form-item label="Key(唯一ID)">
+              <el-input v-model="dataForm.key" @input="dataItemChange('key', dataForm.key)" size="small"></el-input>
+            </el-form-item>
+            <el-form-item label="跳转地址">
+              <el-input
+                v-model="dataForm.targetUrl"
+                @input="dataItemChange('targetUrl', dataForm.targetUrl)"
+                size="small"
+              ></el-input>
+            </el-form-item>
+          </el-row>
+        </el-form>
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -132,6 +147,10 @@ export default {
         backgroundImage: "",
         text: "",
       },
+      dataForm: {
+        key: "",
+        targetUrl: "",
+      },
     }
   },
   watch: {
@@ -149,6 +168,9 @@ export default {
     },
   },
   methods: {
+    dataItemChange(key, value) {
+      this.currentActiveShape.attrs[key] = value
+    },
     formItemChange(type, value) {
       if (this.currentActiveShape) {
         // 给节点设置

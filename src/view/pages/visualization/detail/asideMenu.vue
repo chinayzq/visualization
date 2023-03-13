@@ -40,7 +40,7 @@
           :data-icon="item.icon"
           :data-name="item.name"
           :data-busitype="item.busiType"
-          :data-nodeType="item.nodeType"
+          :data-nodetype="item.nodetype"
           :data-height="item.height"
           :data-width="item.width"
           :data-rotate="item.rotate"
@@ -118,7 +118,7 @@ export default {
               icon: detail.statusList[detail.default],
               name: item.name,
               busiType: "basicComponent",
-              nodeType: "text",
+              nodetype: "text",
               height: 100,
               width: 100,
               rotate: 0,

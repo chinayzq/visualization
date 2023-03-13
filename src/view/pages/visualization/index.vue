@@ -22,6 +22,7 @@
 
 <script>
 import finalTable from "@/components/FinalTable"
+import { copy2Clip } from "@/utils/utils.js"
 import { getVisualizationList, deleteVisualization } from "@/api"
 export default {
   name: "visualizationList",
@@ -56,7 +57,7 @@ export default {
             label: "创建时间",
             width: "",
           },
-          { prop: "operation", label: "操作", width: "115" },
+          { prop: "operation", label: "操作", width: "300" },
         ],
         tableData: [],
         // 搜索行配置
@@ -81,6 +82,15 @@ export default {
           operation: {
             type: "icon",
             iconList: [
+              {
+                actionType: "iconClick",
+                eventName: "copy",
+                fontSize: "14px",
+                color: "#1A4CEC",
+                cursorPointer: "pointer",
+                iconName: "el-icon-edit",
+                tooltips: "拷贝地址",
+              },
               {
                 actionType: "iconClick",
                 eventName: "edit",
@@ -146,6 +156,9 @@ export default {
         this.getListData()
       } else if (datas.type === "iconClick") {
         switch (datas.eventName) {
+          case "copy":
+            this.copyHandler(datas.row)
+            break
           case "edit":
             this.updateRule(datas.row)
             break
@@ -154,6 +167,10 @@ export default {
             break
         }
       }
+    },
+    copyHandler() {
+      const targetUrl = "https://www.baidu.com"
+      copy2Clip(targetUrl)
     },
     // 组态保存后，自动刷新列表
     bindEvent() {

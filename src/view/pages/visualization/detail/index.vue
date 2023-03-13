@@ -172,13 +172,151 @@ export default {
           this.graphLoading = false
         })
     },
+    textEditorRender(item, callback) {
+      const { height, width, x, y, text } = item || {}
+      const textNode = new Konva.Text({
+        nodetype: "textEditor",
+        fontSize: 14,
+        text,
+        x,
+        y,
+        index: 2,
+        rotation: 0,
+        draggable: true,
+        fill: "#ffffff",
+        height: Number(height),
+        width: Number(width),
+      })
+      this.layer.add(textNode)
+      if (!x && !y) {
+        textNode.position(this.stage.getPointerPosition())
+      }
+      this.layer.draw()
+      if (callback) {
+        callback()
+      }
+    },
+    linkButtonRender(item, callback) {
+      const { height, width, nodetype, x, y, text, icon, backgroundIcon } = item || {}
+      const textNode = new Konva.Text({
+        fontSize: 16,
+        text,
+        index: 2,
+        x,
+        y,
+        rotation: 0,
+        draggable: true,
+        fill: "#ffffff",
+        id: item.id || this.GenNonDuplicateID(),
+        height: Number(height),
+        width: Number(width),
+        verticalAlign: "middle",
+        align: "center",
+        nodetype,
+        backgroundIcon: icon || backgroundIcon,
+      })
+      const imageObj = new window.Image()
+      imageObj.src = icon || backgroundIcon
+      imageObj.onload = () => {
+        const Image = new Konva.Image({
+          height: Number(height),
+          width: Number(width),
+          radius: 50,
+          image: imageObj,
+          icon: icon || backgroundIcon,
+          x,
+          y,
+          draggable: true,
+          index: 1,
+          rotation: 0,
+          backgroundImage: "",
+          nodetype: "buttonBackground",
+        })
+        textNode.on("dragmove transform", () => {
+          Image.setAttrs({
+            x: textNode.x(),
+            y: textNode.y(),
+            width: textNode.width(),
+            height: textNode.height(),
+            scaleX: textNode.scaleX(),
+            scaleY: textNode.scaleY(),
+          })
+        })
+        Image.on("dragmove transform", () => {
+          textNode.setAttrs({
+            x: Image.x(),
+            y: Image.y(),
+            width: Image.width(),
+            height: Image.height(),
+            scaleX: Image.scaleX(),
+            scaleY: Image.scaleY(),
+          })
+        })
+        this.layer.add(Image)
+        this.layer.add(textNode)
+        // textNode.setZIndex(2)
+        // Image.setZIndex(1)
+        if (!x && !y) {
+          Image.position(this.stage.getPointerPosition())
+          textNode.position(this.stage.getPointerPosition())
+        }
+        this.layer.draw()
+        if (callback) {
+          callback()
+        }
+      }
+    },
+    gifRender(item, callback) {
+      const { height, width, icon, x, y } = item || {}
+      const canvas = document.createElement("canvas")
+      const that = this
+      canvas.width = width || 100
+      canvas.height = height || 100
+      function onDrawFrame(ctx, frame) {
+        // lodash.debounce((e) => {
+        ctx.drawImage(frame.buffer, 0, 0, 100, 100)
+        that.layer.draw()
+        // }, 100)
+      }
+      // gifler("@/assets/images/gufengji.gif").frames(canvas, onDrawFrame)
+      gifler(icon).frames(canvas, onDrawFrame)
+      const Image = new Konva.Image({
+        image: canvas,
+        height: 100,
+        width: 100,
+        radius: 50,
+        icon: icon,
+        draggable: true,
+        id: that.GenNonDuplicateID(),
+        index: 1,
+        rotation: 0,
+        backgroundImage: "",
+        x,
+        y,
+      })
+      that.layer.add(Image)
+      if (!x && !y) {
+        Image.position(that.stage.getPointerPosition())
+      }
+      that.layer.draw()
+    },
     // 渲染单个自定义节点
     displaySingleNode({ attrs, className }) {
-      const { icon, x, y, backgroundImage, height, width, rotation, text, nodeType } = attrs
-      console.log("rotation", rotation)
+      const { icon, x, y, backgroundImage, height, width, rotation, text, nodetype } = attrs
       return new Promise((resolve, reject) => {
         try {
-          if (className === "Image") {
+          debugger
+          if (nodetype === "textEditor") {
+            this.textEditorRender(attrs, resolve)
+          } else if (nodetype === "linkButton") {
+            this.linkButtonRender(attrs, resolve)
+          } else if (attrs.icon && attrs.icon.includes("data:image/gif")) {
+            this.gifRender(attrs, resolve)
+          } else {
+            // 如果是按钮的背景图Image对象，不需要再次渲染
+            if (["buttonBackground"].includes(nodetype)) {
+              return
+            }
             // 初始化image对象
             const imageObj = new window.Image()
             imageObj.src = icon
@@ -206,23 +344,10 @@ export default {
               Image.position({ x, y })
               resolve()
             }
-          } else if (nodeType === "textEditor") {
-            const TextNode = new Konva.Text({
-              text,
-              nodeType: "textEditor",
-              x,
-              y,
-              fontSize: 14,
-              draggable: true,
-              width,
-              height,
-            })
-            this.layer.add(TextNode)
-            resolve()
           }
         } catch (err) {
           // 渲染异常处理
-          console.log("图形渲染失败！")
+          console.log("图形渲染失败！", err)
           reject()
         }
       })
@@ -312,6 +437,7 @@ export default {
     // 设置画布背景图及宽、高
     setBackground({ type, datas }) {
       const targetDom = $(".konvajs-content")[0]
+      if (!targetDom) return
       switch (type) {
         case "image":
           targetDom.style.backgroundImage = `url(${datas})`
@@ -499,7 +625,7 @@ export default {
         const currentNode = e.target
         this.currentNode = currentNode
         // 双击的不是文本编辑节点 return
-        if (currentNode.attrs.nodeType !== "textEditor") return
+        if (currentNode.attrs.nodetype !== "textEditor") return
         // 隐藏当前节点和transformer
         this.currentNode.hide()
         this.tr.hide()
@@ -616,27 +742,14 @@ export default {
         // 获取当前拖动图片的icon
         const { icon, nodetype, text, height, width, item } = this.currentDragItem
         const currentItem = JSON.parse(item)
-        console.log("this.currentDragItem", currentItem.icon)
+        debugger
         if (nodetype === "textEditor") {
           // 纯展示文本框
-          const textNode = new Konva.Text({
-            nodeType: "textEditor",
-            fontSize: 14,
-            text,
-            index: 2,
-            rotation: 0,
-            draggable: true,
-            fill: "#ffffff",
-            height: Number(height),
-            width: Number(width),
-          })
-          this.layer.add(textNode)
-          textNode.position(this.stage.getPointerPosition())
-          this.layer.draw()
+          this.textEditorRender(this.currentDragItem)
         } else if (nodetype === "valueTextEditor") {
           // 带有边框，能更新数值的文本框
           const textNode = new Konva.Text({
-            nodeType: "textEditor",
+            nodetype: "textEditor",
             fontSize: 14,
             text,
             index: 2,
@@ -680,36 +793,11 @@ export default {
           box.position(this.stage.getPointerPosition())
           // this.tr.nodes([textNode])
           this.layer.draw()
+        } else if (nodetype === "linkButton") {
+          this.linkButtonRender(this.currentDragItem)
         } else {
           if (currentItem.icon.includes("data:image/gif")) {
-            const canvas = document.createElement("canvas")
-            const that = this
-            canvas.width = 100
-            canvas.height = 100
-            function onDrawFrame(ctx, frame) {
-              // lodash.debounce((e) => {
-              ctx.drawImage(frame.buffer, 0, 0, 100, 100)
-              that.layer.draw()
-              // }, 100)
-            }
-            // gifler("@/assets/images/gufengji.gif").frames(canvas, onDrawFrame)
-            gifler(currentItem.icon).frames(canvas, onDrawFrame)
-            const Image = new Konva.Image({
-              image: canvas,
-              height: 100,
-              width: 100,
-              radius: 50,
-              icon: currentItem.icon,
-              draggable: true,
-              id: that.GenNonDuplicateID(),
-              index: 1,
-              rotation: 0,
-              backgroundImage: "",
-            })
-            console.log("xxxxxxxx2")
-            that.layer.add(Image)
-            Image.position(that.stage.getPointerPosition())
-            that.layer.draw()
+            this.gifRender(this.currentDragItem)
           } else {
             // 初始化image对象
             const imageObj = new window.Image()
