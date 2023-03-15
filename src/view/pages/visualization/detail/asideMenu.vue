@@ -185,9 +185,10 @@ export default {
     left: 70px;
     top: 50px;
     display: flex;
-    justify-content: space-around;
-    align-content: flex-start;
+    justify-content: space-between;
     flex-wrap: wrap;
+    flex-direction: row;
+    align-content: flex-start;
     .menu_item {
       height: 60px;
       width: 60px;

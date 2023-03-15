@@ -56,7 +56,14 @@
                 </el-form-item>
               </el-col>
             </el-row>
-            <el-row>
+            <el-row
+              v-if="
+                currentActiveShape &&
+                currentActiveShape.attrs &&
+                currentActiveShape.attrs.nodetype &&
+                ['textEditor', 'linkButton'].includes(currentActiveShape.attrs.nodetype)
+              "
+            >
               <el-form-item label="文字内容">
                 <el-input
                   type="textarea"
@@ -111,15 +118,42 @@
         </el-form>
       </el-tab-pane>
       <el-tab-pane label="数据" name="second">
-        <el-form label-position="top" label-width="100%" :model="dataForm">
+        <el-form label-position="top" label-width="100%" :model="formLabelAlign">
           <el-row :gutter="24">
             <el-form-item label="Key(唯一ID)">
-              <el-input v-model="dataForm.key" @input="dataItemChange('key', dataForm.key)" size="small"></el-input>
-            </el-form-item>
-            <el-form-item label="跳转地址">
               <el-input
-                v-model="dataForm.targetUrl"
-                @input="dataItemChange('targetUrl', dataForm.targetUrl)"
+                v-model="formLabelAlign.key"
+                @input="dataItemChange('key', formLabelAlign.key)"
+                size="small"
+              ></el-input>
+            </el-form-item>
+            <el-form-item
+              label="跳转地址"
+              v-if="
+                currentActiveShape &&
+                currentActiveShape.attrs &&
+                currentActiveShape.attrs.nodetype &&
+                ['linkButton'].includes(currentActiveShape.attrs.nodetype)
+              "
+            >
+              <el-input
+                v-model="formLabelAlign.targetUrl"
+                @input="dataItemChange('targetUrl', formLabelAlign.targetUrl)"
+                size="small"
+              ></el-input>
+            </el-form-item>
+            <el-form-item
+              label="单位"
+              v-if="
+                currentActiveShape &&
+                currentActiveShape.attrs &&
+                currentActiveShape.attrs.nodetype &&
+                ['valueLabel'].includes(currentActiveShape.attrs.nodetype)
+              "
+            >
+              <el-input
+                v-model="formLabelAlign.unit"
+                @input="dataItemChange('unit', formLabelAlign.unit)"
                 size="small"
               ></el-input>
             </el-form-item>
@@ -146,10 +180,9 @@ export default {
         rotation: 0,
         backgroundImage: "",
         text: "",
-      },
-      dataForm: {
         key: "",
         targetUrl: "",
+        unit: "",
       },
     }
   },
@@ -170,6 +203,7 @@ export default {
   methods: {
     dataItemChange(key, value) {
       this.currentActiveShape.attrs[key] = value
+      this.$emit("changeSingleNode", this.currentActiveShape)
     },
     formItemChange(type, value) {
       if (this.currentActiveShape) {

@@ -1,16 +1,21 @@
 <template>
   <div class="visualization_detail_comp">
-    <topBar v-show="!previewFlag" :scale="scale" @graphEvent="graphEvent" />
-    <div v-show="previewFlag" class="preview_bar">
+    <topBar v-show="previewFlag === 'edit'" :scale="scale" @graphEvent="graphEvent" />
+    <div v-show="previewFlag === 'view'" class="preview_bar">
       <div>预览</div>
-      <div @click="previewFlag = false" class="close_icon">
+      <div @click="previewFlag = 'edit'" class="close_icon">
         <el-tooltip class="item" effect="dark" content="Esc键退出全屏预览" placement="bottom">
           <i class="el-icon-close"></i>
         </el-tooltip>
       </div>
     </div>
-    <div class="main_container">
-      <div class="menu_container" v-show="!previewFlag">
+    <div
+      class="main_container"
+      :style="{
+        height: previewFlag === 'edit' ? `calc(100% - 50px)` : '100%',
+      }"
+    >
+      <div class="menu_container" v-show="previewFlag === 'edit'">
         <asideMenu @setCurrentDragItem="setCurrentDragItem" />
       </div>
       <div
@@ -21,10 +26,11 @@
         element-loading-spinner="el-icon-loading"
         element-loading-background="rgba(0, 0, 0, 0.3)"
       ></div>
-      <div class="props_container" v-show="!previewFlag">
+      <div class="props_container" v-show="previewFlag === 'edit'">
         <detailProps
           :currentActiveShape="currentActiveShape"
           :currentActiveProps="currentActiveProps"
+          @changeSingleNode="changeSingleNode"
           @setBackground="setBackground"
         />
       </div>
@@ -66,7 +72,6 @@ import topBar from "./topBar.vue"
 import asideMenu from "./asideMenu.vue"
 import detailProps from "./detailProps.vue"
 import { konvaMixins } from "@/mixins/konvaMixins.js"
-import lodash from "lodash"
 // import Konva from "konva"
 import { getVisualizationDetail, addVisualization, modifyVisualization } from "@/api"
 export default {
@@ -78,10 +83,11 @@ export default {
   mixins: [konvaMixins],
   data() {
     return {
+      allNodeDatas: [],
       graphLoading: false,
       currentNode: null,
       textarea: null,
-      previewFlag: false,
+      previewFlag: "edit",
       saveDialog: {
         saveDialogShow: false,
         title: "场景保存",
@@ -122,15 +128,62 @@ export default {
     previewFlag: {
       handler(val) {
         if (!$("#stage_container")[0]) return
-        $("#stage_container")[0].style.width = val ? "100%" : "calc(100vw - 370px)"
+        $("#stage_container")[0].style.width = val === "edit" ? "calc(100vw - 370px)" : "100%"
       },
       immediate: true,
     },
   },
   mounted() {
+    /**
+     * viewMode
+     * edit: 编辑状态
+     * view: 临时预览状态
+     * detail: 详情模式
+     */
+    const { viewMode } = this.$route.query
+    this.previewFlag = viewMode || "edit"
     this.initData()
+    this.testDataPush()
   },
   methods: {
+    testDataPush() {
+      // valueLabel测试
+      // setTimeout(() => {
+      //   let datas = {
+      //     key: "testKey1",
+      //     value: 100,
+      //   }
+      //   console.log("推送数据来了！", datas)
+      //   this.dataPushHandler(datas)
+      // }, 5000)
+      // node切换图片测试
+      setTimeout(() => {
+        let datas = {
+          key: "testKey2",
+          state: "stop",
+        }
+        console.log("推送数据来了！", datas)
+        this.dataPushHandler(datas)
+      }, 5000)
+    },
+    dataPushHandler({ key, value, state }) {
+      const currentNode = this.findNodeByKey(key)
+      switch (currentNode.attrs.nodetype) {
+        case "valueLabel":
+          currentNode.attrs["value"] = value
+          break
+        case "businessNode":
+          currentNode.attrs["icon"] = currentNode.attrs.statusList[state]
+          break
+      }
+      this.changeSingleNode(currentNode)
+    },
+    findNodeByKey(key) {
+      const node = this.stage.findOne((node) => {
+        return node.getAttr("key") === key
+      })
+      return node || ""
+    },
     initData() {
       const { id } = this.$route.query
       if (!id) {
@@ -159,6 +212,7 @@ export default {
       // 回显自定义节点
       // 只有一个图层，所以取children[0]
       const TheLayer = displayDatas.children[0]
+      this.allNodeDatas = TheLayer.children
       const ImageNodes = TheLayer.children.filter((item) => item.className === "Image" || item.className === "Text")
       let displayList = []
       ImageNodes.forEach((item) => displayList.push(this.displaySingleNode(item)))
@@ -196,12 +250,15 @@ export default {
         callback()
       }
     },
-    linkButtonRender(item, callback) {
-      const { height, width, nodetype, x, y, text, icon, backgroundIcon } = item || {}
+    valueLabelRender(item, callback) {
+      const { height, width, nodetype, x, y, key, value, unit, icon, backgroundIcon } = item || {}
       const textNode = new Konva.Text({
         fontSize: 16,
-        text,
+        text: `${value || ""} ${unit || ""}`,
+        unit: unit,
+        value: value,
         index: 2,
+        key,
         x,
         y,
         rotation: 0,
@@ -230,7 +287,76 @@ export default {
           index: 1,
           rotation: 0,
           backgroundImage: "",
-          nodetype: "buttonBackground",
+          nodetype: "backgroundImage",
+        })
+        textNode.on("dragmove transform", () => {
+          Image.setAttrs({
+            x: textNode.x(),
+            y: textNode.y(),
+            width: textNode.width(),
+            height: textNode.height(),
+            scaleX: textNode.scaleX(),
+            scaleY: textNode.scaleY(),
+          })
+        })
+        Image.on("dragmove transform", () => {
+          textNode.setAttrs({
+            x: Image.x(),
+            y: Image.y(),
+            width: Image.width(),
+            height: Image.height(),
+            scaleX: Image.scaleX(),
+            scaleY: Image.scaleY(),
+          })
+        })
+        this.layer.add(Image)
+        this.layer.add(textNode)
+        if (!x && !y) {
+          Image.position(this.stage.getPointerPosition())
+          textNode.position(this.stage.getPointerPosition())
+        }
+        this.layer.draw()
+        if (callback) {
+          callback()
+        }
+      }
+    },
+    linkButtonRender(item, callback) {
+      const { height, width, nodetype, x, y, text, icon, backgroundIcon, targetUrl } = item || {}
+      const textNode = new Konva.Text({
+        fontSize: 16,
+        text,
+        index: 2,
+        x,
+        y,
+        rotation: 0,
+        draggable: true,
+        fill: "#ffffff",
+        id: item.id || this.GenNonDuplicateID(),
+        height: Number(height),
+        width: Number(width),
+        verticalAlign: "middle",
+        align: "center",
+        nodetype,
+        backgroundIcon: icon || backgroundIcon,
+        targetUrl,
+      })
+      const imageObj = new window.Image()
+      imageObj.src = icon || backgroundIcon
+      imageObj.onload = () => {
+        const Image = new Konva.Image({
+          height: Number(height),
+          width: Number(width),
+          radius: 50,
+          image: imageObj,
+          icon: icon || backgroundIcon,
+          x,
+          y,
+          draggable: true,
+          index: 1,
+          rotation: 0,
+          backgroundImage: "",
+          nodetype: "backgroundImage",
         })
         textNode.on("dragmove transform", () => {
           Image.setAttrs({
@@ -300,21 +426,41 @@ export default {
       }
       that.layer.draw()
     },
+    changeSingleNode(node) {
+      const { icon, x, y, backgroundImage, height, width, rotation, text, value, unit, nodetype, targetUrl } =
+        node.attrs
+      switch (nodetype) {
+        case "valueLabel":
+          node.text(`${value || ""} ${unit || ""}`)
+          break
+        case "linkButton":
+          node.attrs["targetUrl"] = targetUrl
+          break
+        case "businessNode":
+          const imageObj = new window.Image()
+          imageObj.src = icon
+          imageObj.onload = () => {
+            node.image(imageObj)
+          }
+          break
+      }
+    },
     // 渲染单个自定义节点
-    displaySingleNode({ attrs, className }) {
-      const { icon, x, y, backgroundImage, height, width, rotation, text, nodetype } = attrs
+    displaySingleNode({ attrs }) {
+      const { icon, x, y, backgroundImage, height, width, rotation, text, nodetype, statusList, key } = attrs
       return new Promise((resolve, reject) => {
         try {
-          debugger
           if (nodetype === "textEditor") {
             this.textEditorRender(attrs, resolve)
           } else if (nodetype === "linkButton") {
             this.linkButtonRender(attrs, resolve)
+          } else if (nodetype === "valueLabel") {
+            this.valueLabelRender(attrs, resolve)
           } else if (attrs.icon && attrs.icon.includes("data:image/gif")) {
             this.gifRender(attrs, resolve)
           } else {
             // 如果是按钮的背景图Image对象，不需要再次渲染
-            if (["buttonBackground"].includes(nodetype)) {
+            if (["backgroundImage"].includes(nodetype)) {
               return
             }
             // 初始化image对象
@@ -322,6 +468,7 @@ export default {
             imageObj.src = icon
             imageObj.onload = () => {
               const Image = new Konva.Image({
+                nodetype: "businessNode",
                 height,
                 width,
                 radius: 50,
@@ -333,6 +480,8 @@ export default {
                 index: 1,
                 rotation: rotation || 0,
                 backgroundImage,
+                statusList,
+                key,
               })
               // 设置背景图
               const backImageObj = new window.Image()
@@ -433,6 +582,13 @@ export default {
       this.backgroundObj.width = Number(width.substr(0, width.length - 2))
       this.backgroundObj.height = Number(height.substr(0, height.length - 2))
       this.currentActiveProps = this.backgroundObj
+      // 如果是详情模式，则居中画布
+      if (this.$route.query.viewMode === "detail") {
+        this.backgroundTop = `${(960 - height.substr(0, height.length - 2)) / 2}px`
+        this.backgroundLeft = `${(1920 - width.substr(0, width.length - 2)) / 2}px`
+        $(".konvajs-content").css("top", this.backgroundTop)
+        $(".konvajs-content").css("left", this.backgroundLeft)
+      }
     },
     // 设置画布背景图及宽、高
     setBackground({ type, datas }) {
@@ -480,7 +636,7 @@ export default {
           this.saveDialog.saveDialogShow = true
           break
         case "goPreview":
-          this.previewFlag = true
+          this.previewFlag = "view"
           break
       }
     },
@@ -504,11 +660,19 @@ export default {
       this.currentDragItem = item
     },
     bindEvent() {
+      // 初始化click&拖拽事件
+      this.initClickHandler(this.stage)
+
+      const { viewMode } = this.$route.query
+      // // 如果是详情页面，
+      if (viewMode === "detail") {
+        this.tr.nodes([])
+        this.layer.draw()
+        return
+      }
       const Stage = this.stage.container()
       // 初始化drop事件
       this.initDropHandler(Stage)
-      // 初始化click&拖拽事件
-      this.initClickHandler(this.stage)
       // 初始化dbclick双击事件
       // this.initDBClickHandler(this.stage)
       // 初始化右键菜单事件
@@ -521,7 +685,7 @@ export default {
         .on("keydown", (e) => {
           if (e.keyCode == 27) {
             e.preventDefault()
-            this.previewFlag = false
+            this.previewFlag = "edit"
           }
         })
       // 改变窗口大小重新初始化画布和事件
@@ -563,6 +727,14 @@ export default {
           delta > 0 ? this.zoomout() : this.zoomin()
         })
     },
+    detailClickHandler(node) {
+      const { nodetype, targetUrl } = node.attrs || {}
+      switch (nodetype) {
+        case "linkButton":
+          window.open(targetUrl, "_blank")
+          break
+      }
+    },
     // 点击&拖拽事件处理
     initClickHandler(Stage) {
       Stage.on("mousedown", (e) => {
@@ -573,44 +745,52 @@ export default {
         }
         // 设置当前激活节点
         this.currentActiveShape = e.target
-        // 设置当前节点属性
-        this.currentActiveProps = e.target.attrs
-        const ClickBlank = e.target === this.stage
-        // 如果点击空白区域
-        if (ClickBlank) {
-          console.log("点击空白区域")
-          this.currentActiveShape = null
-          this.currentActiveProps = this.backgroundObj
-          // 改变鼠标样式，绑定mousemove事件，拖拽画布
-          $(".konvajs-content").css("cursor", "grabbing")
-          let startPoint = {
-            x: e.evt.pageX,
-            y: e.evt.pageY,
+        // 如果是viewMode = detail,则判断节点并打开弹窗
+        if (this.$route.query && this.$route.query.viewMode === "detail") {
+          // 取消所有节点的移动事件
+          Stage.stopDrag()
+          // 处理点击事件
+          this.detailClickHandler(this.currentActiveShape)
+        } else {
+          // 设置当前节点属性
+          this.currentActiveProps = e.target.attrs
+          const ClickBlank = e.target === this.stage
+          // 如果点击空白区域
+          if (ClickBlank) {
+            console.log("点击空白区域")
+            this.currentActiveShape = null
+            this.currentActiveProps = this.backgroundObj
+            // 改变鼠标样式，绑定mousemove事件，拖拽画布
+            $(".konvajs-content").css("cursor", "grabbing")
+            let startPoint = {
+              x: e.evt.pageX,
+              y: e.evt.pageY,
+            }
+            const startPosition = {
+              x: this.backgroundTop,
+              y: this.backgroundLeft,
+            }
+            Stage.on("mousemove", (event) => {
+              const xDiff = startPosition.x + event.evt.pageY - startPoint.y
+              const yDiff = startPosition.y + event.evt.pageX - startPoint.x
+              this.backgroundTop = xDiff
+              this.backgroundLeft = yDiff
+              console.log("xDiff", xDiff)
+              $(".konvajs-content").css("top", xDiff)
+              $(".konvajs-content").css("left", yDiff)
+            })
+            this.tr.nodes([])
+            this.removeTextarea()
+            this.layer.draw()
+            return
           }
-          const startPosition = {
-            x: this.backgroundTop,
-            y: this.backgroundLeft,
-          }
-          Stage.on("mousemove", (event) => {
-            const xDiff = startPosition.x + event.evt.pageY - startPoint.y
-            const yDiff = startPosition.y + event.evt.pageX - startPoint.x
-            this.backgroundTop = xDiff
-            this.backgroundLeft = yDiff
-            console.log("xDiff", xDiff)
-            $(".konvajs-content").css("top", xDiff)
-            $(".konvajs-content").css("left", yDiff)
-          })
-          this.tr.nodes([])
-          this.removeTextarea()
+          // 点击到了具体图形，则激活该元素的transformer
+          this.tr.nodes([e.target])
+          this.initTransformHandler(e.target)
+          // 获取当前节点的index，给tr设置index
+          this.tr.setZIndex(e.target.attrs.index)
           this.layer.draw()
-          return
         }
-        // 点击到了具体图形，则激活该元素的transformer
-        this.tr.nodes([e.target])
-        this.initTransformHandler(e.target)
-        // 获取当前节点的index，给tr设置index
-        this.tr.setZIndex(e.target.attrs.index)
-        this.layer.draw()
       })
       // mouseup的时候取消样式和mousemove事件
       Stage.on("mouseup", (e) => {
@@ -742,57 +922,12 @@ export default {
         // 获取当前拖动图片的icon
         const { icon, nodetype, text, height, width, item } = this.currentDragItem
         const currentItem = JSON.parse(item)
-        debugger
         if (nodetype === "textEditor") {
           // 纯展示文本框
           this.textEditorRender(this.currentDragItem)
-        } else if (nodetype === "valueTextEditor") {
+        } else if (nodetype === "valueLabel") {
           // 带有边框，能更新数值的文本框
-          const textNode = new Konva.Text({
-            nodetype: "textEditor",
-            fontSize: 14,
-            text,
-            index: 2,
-            rotation: 0,
-            draggable: true,
-            fill: "#000000",
-            shadowColor: "red",
-            height: Number(height),
-            width: Number(width),
-          })
-          const box = new Konva.Rect({
-            x: textNode.x(),
-            y: textNode.y(),
-            stroke: "#ff00000",
-            index: 1,
-            width: textNode.width(),
-            height: textNode.height(),
-            draggable: true,
-          })
-          textNode.setZIndex(2)
-          box.setZIndex(1)
-          textNode.on("dragmove transform", () => {
-            box.setAttrs({
-              x: textNode.x(),
-              y: textNode.y(),
-              scaleX: textNode.scaleX(),
-              scaleY: textNode.scaleY(),
-            })
-          })
-          this.layer.add(box)
-          this.layer.add(textNode)
-          box.on("dragmove transform", () => {
-            textNode.setAttrs({
-              x: box.x(),
-              y: box.y(),
-              scaleX: box.scaleX(),
-              scaleY: box.scaleY(),
-            })
-          })
-          textNode.position(this.stage.getPointerPosition())
-          box.position(this.stage.getPointerPosition())
-          // this.tr.nodes([textNode])
-          this.layer.draw()
+          this.valueLabelRender(this.currentDragItem)
         } else if (nodetype === "linkButton") {
           this.linkButtonRender(this.currentDragItem)
         } else {
@@ -814,6 +949,8 @@ export default {
                 index: 1,
                 rotation: 0,
                 backgroundImage: "",
+                statusList: currentItem.detail.statusList,
+                nodetype: "businessNode",
               })
               this.layer.add(Image)
               Image.position(this.stage.getPointerPosition())
@@ -826,7 +963,6 @@ export default {
     // contextmenu 事件处理
     initContextMenu(Stage) {
       const menuNode = document.getElementById("context_container")
-      let currentShape
       Stage.on("contextmenu", (e) => {
         // 阻止默认事件，否则无法弹出自定义menu
         e.evt.preventDefault()
@@ -950,7 +1086,6 @@ export default {
   }
   .main_container {
     display: flex;
-    height: calc(100% - 50px);
     .menu_container {
       height: 100%;
       width: 70px;
