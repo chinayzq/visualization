@@ -127,3 +127,50 @@ export function modifyVisualization(params) {
     data: params,
   })
 }
+
+/**
+ * 动态地址 - 分页查询
+ * @param params
+ */
+export function getUrlList(params) {
+  return request({
+    url: `/api/sys-url/queryPage/${params.size}/${params.page}`,
+    method: "get",
+    params,
+  })
+}
+
+/**
+ * 动态地址 - 新增
+ * @param params
+ */
+export function addUrl(params) {
+  return request({
+    url: `/api/sys-url/save`,
+    method: "post",
+    data: params,
+  })
+}
+
+/**
+ * 动态地址 - 更新
+ * @param params
+ */
+export function updateUrl(params) {
+  return request({
+    url: `/api/sys-url/update`,
+    method: "put",
+    data: params,
+  })
+}
+
+/**
+ * 动态地址 - 删除
+ * @param params
+ */
+export function deleteUrl(id) {
+  return request({
+    url: `/api/sys-url/delete/${id}`,
+    method: "delete",
+  })
+}

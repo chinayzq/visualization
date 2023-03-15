@@ -5,22 +5,22 @@
         <el-row :gutter="48">
           <el-col :span="12">
             <el-form-item label="名称(resource)" prop="name">
-              <el-input v-model="form.name"></el-input>
+              <el-input :disabled="editRow.id" v-model="form.name"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="地址" prop="name">
-              <el-input v-model="form.address"></el-input>
+              <el-input v-model="form.url"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="48">
+        <!-- <el-row :gutter="48">
           <el-col :span="24">
             <el-form-item label="描述" prop="description">
               <el-input v-model="form.description"></el-input>
             </el-form-item>
           </el-col>
-        </el-row>
+        </el-row> -->
       </el-form>
     </div>
     <div class="footer_container" style="text-align: right">
@@ -32,6 +32,7 @@
 
 <script>
 import { deepClone } from "@/utils/utils.js"
+import { addUrl, updateUrl } from "@/api"
 export default {
   name: "addressDialogComponent",
   props: {
@@ -46,18 +47,18 @@ export default {
     return {
       form: {
         name: "",
-        address: "",
-        description: "",
+        url: "",
+        // description: "",
       },
       rules: {
         name: [{ required: true, message: "请填写名称", trigger: "blur" }],
-        address: [{ required: true, message: "请填写地址", trigger: "blur" }],
+        url: [{ required: true, message: "请填写地址", trigger: "blur" }],
       },
     }
   },
   created() {
     if (this.editRow.id) {
-      this.displayDatas()
+      this.form = deepClone(this.editRow)
     } else {
       this.formReset()
     }
@@ -66,24 +67,26 @@ export default {
     formReset() {
       this.form = {
         name: "",
-        address: "",
-        description: "",
+        url: "",
       }
     },
     submitHandler() {
       this.$refs["form"].validate((valid) => {
         if (valid) {
-          const curForm = this.buildReqParams(deepClone(this.form))
+          const curForm = deepClone(this.form)
           if (this.editRow.id) {
             //   编辑
-            modifyMeterial(curForm).then((res) => {
+            updateUrl({
+              id: this.editRow.id,
+              url: this.form.url,
+            }).then((res) => {
               this.$message.success("修改成功！")
               this.$emit("close")
               this.$emit("freshList")
             })
           } else {
             //   新增
-            addMeterial(curForm).then((res) => {
+            addUrl(curForm).then((res) => {
               if (res.code === 200) {
                 this.$message.success("新增成功!")
                 this.$emit("close")

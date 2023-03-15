@@ -4,14 +4,6 @@
       <span>
         <el-button type="primary" @click="createAddress">添加地址</el-button>
       </span>
-      <!-- <div
-        class="header-filter-button"
-        @click="dataset.filterLine.show = !dataset.filterLine.show"
-        :class="dataset.filterLine.show ? 'filter-button-open' : 'filter-button-close'"
-      >
-        <i class="iconfont icon-loudoutu"></i>
-        筛选
-      </div> -->
     </div>
 
     <div>
@@ -40,6 +32,8 @@
 <script>
 import finalTable from "@/components/FinalTable"
 import AddressDialog from "./components/addressDialog.vue"
+import { getUrlList, deleteUrl } from "@/api"
+import { deepClone } from "@/utils/utils.js"
 export default {
   name: "dynamicAddressComponent",
   components: {
@@ -51,6 +45,11 @@ export default {
       dialogTitle: "新增地址",
       dialogShow: false,
       editRow: {},
+      listQuery: {
+        page: 1,
+        size: 10,
+      },
+      tableLoading: false,
       dataset: {
         paginationConfig: {
           need: true,
@@ -68,15 +67,15 @@ export default {
             width: "",
           },
           {
-            prop: "address",
+            prop: "url",
             label: "地址",
             width: "",
           },
-          {
-            prop: "description",
-            label: "描述",
-            width: "",
-          },
+          // {
+          //   prop: "description",
+          //   label: "描述",
+          //   width: "",
+          // },
           {
             prop: "operation",
             label: "操作",
@@ -122,13 +121,78 @@ export default {
       },
     }
   },
+  watch: {
+    tableLoading(val) {
+      this.$refs.finalTableRef.loadingToggle(val)
+    },
+  },
+  created() {
+    this.getListData()
+  },
   methods: {
-    getListData() {},
+    getListData() {
+      this.tableLoading = true
+      const requestParams = { ...this.listQuery }
+      getUrlList(requestParams)
+        .then((res) => {
+          if (res && res.code === 200) {
+            this.dataset.pageVO.total = res.data.total
+            this.dataset.tableData = res.data.records || []
+          } else {
+            this.dataset.pageVO.total = 0
+            this.dataset.tableData = []
+          }
+          this.tableLoading = false
+        })
+        .catch(() => {
+          this.tableLoading = false
+        })
+    },
     createAddress() {
       this.dialogTitle = "新增地址"
       this.dialogShow = true
     },
-    tableEventHandler() {},
+    tableEventHandler(datas) {
+      if (datas.type === "goSearch") {
+        this.listQuery = { ...this.listQuery, ...datas.params }
+        this.listQuery.page = 1
+        this.getListData()
+      } else if (datas.type === "paginationChange") {
+        this.listQuery.page = datas.params.current.page
+        this.listQuery.size = datas.params.current.limit
+        this.getListData()
+      } else if (datas.type === "iconClick") {
+        switch (datas.eventName) {
+          case "edit":
+            this.updateHandler(datas.row)
+            break
+          case "delete":
+            this.deleteHandler(datas.row)
+            break
+        }
+      }
+    },
+    deleteHandler(row) {
+      this.$confirm("确定要删除吗？", "警告", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          deleteUrl(row.id).then((res) => {
+            this.$message.success("删除记录成功！")
+            this.getListData()
+          })
+        })
+        .catch((error) => {
+          console.log(`删除失败，原因 => ${error}`)
+        })
+    },
+    updateHandler(row) {
+      this.editRow = deepClone(row)
+      this.dialogTitle = "编辑地址"
+      this.dialogShow = true
+    },
   },
 }
 </script>
