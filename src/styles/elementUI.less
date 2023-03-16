@@ -10,11 +10,26 @@
 // }
 
 .el-dialog__header {
-  text-align: center;
   font-size: 18px;
-  font-family: PingFang SC-Semibold, PingFang SC;
-  font-weight: 600;
-  color: #233a68;
+  font-weight: bold;
+  color: #000000;
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  &::before {
+    content: "";
+    height: 18px;
+    width: 6px;
+    background: #0a89ff;
+    display: inline-block;
+    border-radius: 2px;
+  }
+  .el-dialog__title {
+    padding-left: 6px;
+  }
+  .el-dialog__headerbtn {
+    font-size: 18px;
+  }
 }
 .el-dialog__footer {
   text-align: center;

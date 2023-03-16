@@ -6,7 +6,7 @@ import request from "@/utils/request"
  */
 export function loginRequest(params) {
   return request({
-    url: `/api/sys-user/login?username=${params.username}&password=${params.password}`,
+    url: `/requestUrl/sys-user/login?username=${params.username}&password=${params.password}`,
     method: "post",
     data: params,
   })
@@ -18,7 +18,7 @@ export function loginRequest(params) {
  */
 export function getMaterialList(params) {
   return request({
-    url: `/api/material/queryPage/${params.size}/${params.page}`,
+    url: `/requestUrl/material/queryPage/${params.size}/${params.page}`,
     method: "post",
     data: params,
   })
@@ -30,7 +30,7 @@ export function getMaterialList(params) {
  */
 export function addMeterial(params) {
   return request({
-    url: `/api/material/save`,
+    url: `/requestUrl/material/save`,
     method: "post",
     data: params,
   })
@@ -42,7 +42,7 @@ export function addMeterial(params) {
  */
 export function modifyMeterial(params) {
   return request({
-    url: `/api/material/update`,
+    url: `/requestUrl/material/update`,
     method: "post",
     data: params,
   })
@@ -54,7 +54,7 @@ export function modifyMeterial(params) {
  */
 export function getMaterialDetail({ id }) {
   return request({
-    url: `/api/material/getMaterial/${id}`,
+    url: `/requestUrl/material/getMaterial/${id}`,
     method: "get",
   })
 }
@@ -65,7 +65,7 @@ export function getMaterialDetail({ id }) {
  */
 export function deleteMaterial(id) {
   return request({
-    url: `/api/material/delete/${id}`,
+    url: `/requestUrl/material/delete/${id}`,
     method: "delete",
   })
 }
@@ -76,7 +76,7 @@ export function deleteMaterial(id) {
  */
 export function getVisualizationList(params) {
   return request({
-    url: `/api/html/queryPage/${params.size}/${params.page}`,
+    url: `/requestUrl/html/queryPage/${params.size}/${params.page}`,
     method: "get",
     params,
   })
@@ -88,7 +88,7 @@ export function getVisualizationList(params) {
  */
 export function deleteVisualization(id) {
   return request({
-    url: `/api/html/delete/${id}`,
+    url: `/requestUrl/html/delete/${id}`,
     method: "delete",
   })
 }
@@ -99,7 +99,7 @@ export function deleteVisualization(id) {
  */
 export function addVisualization(params) {
   return request({
-    url: `/api/html/save`,
+    url: `/requestUrl/html/save`,
     method: "post",
     data: params,
   })
@@ -111,7 +111,7 @@ export function addVisualization(params) {
  */
 export function getVisualizationDetail(id) {
   return request({
-    url: `/api/html/getHtml/${id}`,
+    url: `/requestUrl/html/getHtml/${id}`,
     method: "get",
   })
 }
@@ -122,7 +122,7 @@ export function getVisualizationDetail(id) {
  */
 export function modifyVisualization(params) {
   return request({
-    url: `/api/html/update`,
+    url: `/requestUrl/html/update`,
     method: "put",
     data: params,
   })
@@ -134,7 +134,7 @@ export function modifyVisualization(params) {
  */
 export function getUrlList(params) {
   return request({
-    url: `/api/sys-url/queryPage/${params.size}/${params.page}`,
+    url: `/requestUrl/sys-url/queryPage/${params.size}/${params.page}`,
     method: "get",
     params,
   })
@@ -146,7 +146,7 @@ export function getUrlList(params) {
  */
 export function addUrl(params) {
   return request({
-    url: `/api/sys-url/save`,
+    url: `/requestUrl/sys-url/save`,
     method: "post",
     data: params,
   })
@@ -158,7 +158,7 @@ export function addUrl(params) {
  */
 export function updateUrl(params) {
   return request({
-    url: `/api/sys-url/update`,
+    url: `/requestUrl/sys-url/update`,
     method: "put",
     data: params,
   })
@@ -170,7 +170,43 @@ export function updateUrl(params) {
  */
 export function deleteUrl(id) {
   return request({
-    url: `/api/sys-url/delete/${id}`,
+    url: `/requestUrl/sys-url/delete/${id}`,
     method: "delete",
+  })
+}
+
+/**
+ * 获取传感器详情
+ * @param params
+ */
+export function getSensorDetail(params) {
+  return request({
+    url: `/newApi/api/apiConfigure/getSensorDetail`,
+    method: "get",
+    params,
+  })
+}
+
+/**
+ * 数据推送 - 点位值
+ * @param params
+ */
+export function querySensorIndexList(secretKey, params) {
+  return request({
+    url: `/newApi/api/apiConfigure/querySensorIndexList?secretKey=${secretKey}`,
+    method: "post",
+    data: params,
+  })
+}
+
+/**
+ * 数据推送 - 数据状态
+ * @param params
+ */
+export function queryDeviceStateList(secretKey, params) {
+  return request({
+    url: `/newApi/api/apiConfigure/queryDeviceStateList?secretKey=${secretKey}`,
+    method: "post",
+    data: params,
   })
 }

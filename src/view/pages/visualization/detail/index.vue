@@ -64,6 +64,19 @@
         <el-button type="primary" @click="submitSave">确 定</el-button>
       </div>
     </el-dialog>
+    <el-dialog
+      :visible="sensor.dialogShow"
+      :before-close="
+        () => {
+          sensor.dialogShow = false
+          sensor.sensorId = ''
+        }
+      "
+      append-to-body
+      :title="sensor.title"
+    >
+      <SensorDetail :sensorId="sensor.sensorId" :icon="sensor.icon" />
+    </el-dialog>
   </div>
 </template>
 
@@ -71,18 +84,32 @@
 import topBar from "./topBar.vue"
 import asideMenu from "./asideMenu.vue"
 import detailProps from "./detailProps.vue"
+import SensorDetail from "./sensorDetail.vue"
 import { konvaMixins } from "@/mixins/konvaMixins.js"
 // import Konva from "konva"
-import { getVisualizationDetail, addVisualization, modifyVisualization } from "@/api"
+import {
+  getVisualizationDetail,
+  addVisualization,
+  modifyVisualization,
+  querySensorIndexList,
+  queryDeviceStateList,
+} from "@/api"
 export default {
   components: {
     topBar,
     asideMenu,
     detailProps,
+    SensorDetail,
   },
   mixins: [konvaMixins],
   data() {
     return {
+      sensor: {
+        dialogShow: false,
+        title: "设备详情",
+        sensorId: "",
+        icon: "",
+      },
       allNodeDatas: [],
       graphLoading: false,
       currentNode: null,
@@ -143,7 +170,7 @@ export default {
     const { viewMode } = this.$route.query
     this.previewFlag = viewMode || "edit"
     this.initData()
-    this.testDataPush()
+    // this.testDataPush()
   },
   methods: {
     testDataPush() {
@@ -168,6 +195,7 @@ export default {
     },
     dataPushHandler({ key, value, state }) {
       const currentNode = this.findNodeByKey(key)
+      if (!currentNode) return
       switch (currentNode.attrs.nodetype) {
         case "valueLabel":
           currentNode.attrs["value"] = value
@@ -504,18 +532,46 @@ export default {
     // 获取图形数据
     getGraphicalDatas(id) {
       this.graphLoading = true
-      getVisualizationDetail(id).then((res) => {
-        if (res && res.data) {
-          const { basicData, detail } = res.data
-          const displayDatas = JSON.parse(JSON.parse(detail))
-          console.log("displayDatas1", displayDatas)
-          console.log("displayDatas2", basicData)
-          this.displayHandler(basicData, displayDatas)
-          this.saveDialog.name = res.data.name
-          this.saveDialog.description = res.data.description
-        } else {
-          this.$message.warning("获取场景失败！")
-        }
+      getVisualizationDetail(id)
+        .then((res) => {
+          if (res && res.data) {
+            const { basicData, detail } = res.data
+            const displayDatas = JSON.parse(JSON.parse(detail))
+            console.log("displayDatas1", displayDatas)
+            console.log("displayDatas2", basicData)
+            this.displayHandler(basicData, displayDatas)
+            this.saveDialog.name = res.data.name
+            this.saveDialog.description = res.data.description
+          } else {
+            this.$message.warning("获取场景失败！")
+          }
+        })
+        .finally(() => {
+          if (this.$route.query.viewMode === "detail") {
+            this.initDataFresh()
+          }
+        })
+    },
+    initDataFresh() {
+      const secretKey = process.env.VUE_APP_SECRET
+      const params = [
+        {
+          sensorId: 1394,
+          sensorPoint: 11,
+        },
+        {
+          sensorId: 1102,
+          sensorPoint: 0,
+        },
+      ]
+      const params2 = [1394, 1102]
+      // 获取所有点位信息
+      querySensorIndexList(secretKey, params).then((res) => {
+        console.log("xxx", res)
+      })
+      // 获取所有设备状态信息
+      queryDeviceStateList(secretKey, params2).then((res) => {
+        console.log("xxx2", res)
       })
     },
     // 取消保存
@@ -728,10 +784,15 @@ export default {
         })
     },
     detailClickHandler(node) {
-      const { nodetype, targetUrl } = node.attrs || {}
+      const { nodetype, targetUrl, key, icon } = node.attrs || {}
       switch (nodetype) {
         case "linkButton":
           window.open(targetUrl, "_blank")
+          break
+        case "businessNode":
+          this.sensor.sensorId = key
+          this.sensor.icon = icon
+          this.sensor.dialogShow = true
           break
       }
     },
