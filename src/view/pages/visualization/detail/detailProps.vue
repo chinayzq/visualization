@@ -120,10 +120,10 @@
       <el-tab-pane label="数据" name="second">
         <el-form label-position="top" label-width="100%" :model="formLabelAlign">
           <el-row :gutter="24">
-            <el-form-item label="Key(唯一ID)">
+            <el-form-item label="传感器ID(sensorId)">
               <el-input
-                v-model="formLabelAlign.key"
-                @input="dataItemChange('key', formLabelAlign.key)"
+                v-model="formLabelAlign.sensorId"
+                @input="dataItemChange('sensorId', formLabelAlign.sensorId)"
                 size="small"
               ></el-input>
             </el-form-item>
@@ -143,7 +143,7 @@
               ></el-input>
             </el-form-item>
             <el-form-item
-              label="单位"
+              label="点位(sensorPoint)"
               v-if="
                 currentActiveShape &&
                 currentActiveShape.attrs &&
@@ -152,8 +152,8 @@
               "
             >
               <el-input
-                v-model="formLabelAlign.unit"
-                @input="dataItemChange('unit', formLabelAlign.unit)"
+                v-model="formLabelAlign.sensorPoint"
+                @input="dataItemChange('sensorPoint', formLabelAlign.sensorPoint)"
                 size="small"
               ></el-input>
             </el-form-item>
@@ -180,9 +180,9 @@ export default {
         rotation: 0,
         backgroundImage: "",
         text: "",
-        key: "",
+        sensorId: "",
+        sensorPoint: "",
         targetUrl: "",
-        unit: "",
       },
     }
   },

@@ -104,6 +104,8 @@ export default {
   mixins: [konvaMixins],
   data() {
     return {
+      intervalInstance: null,
+      freshStep: 60 * 1000,
       sensor: {
         dialogShow: false,
         title: "设备详情",
@@ -160,6 +162,9 @@ export default {
       immediate: true,
     },
   },
+  beforeDestroy() {
+    this.intervalInstance && window.clearInterval(this.intervalInstance)
+  },
   mounted() {
     /**
      * viewMode
@@ -177,7 +182,7 @@ export default {
       // valueLabel测试
       // setTimeout(() => {
       //   let datas = {
-      //     key: "testKey1",
+      //     sensorId: "testKey1",
       //     value: 100,
       //   }
       //   console.log("推送数据来了！", datas)
@@ -186,15 +191,15 @@ export default {
       // node切换图片测试
       setTimeout(() => {
         let datas = {
-          key: "testKey2",
+          sensorId: "testKey2",
           state: "stop",
         }
         console.log("推送数据来了！", datas)
         this.dataPushHandler(datas)
       }, 5000)
     },
-    dataPushHandler({ key, value, state }) {
-      const currentNode = this.findNodeByKey(key)
+    dataPushHandler({ sensorId, value, state }) {
+      const currentNode = this.findNodeByKey(sensorId)
       if (!currentNode) return
       switch (currentNode.attrs.nodetype) {
         case "valueLabel":
@@ -206,9 +211,25 @@ export default {
       }
       this.changeSingleNode(currentNode)
     },
-    findNodeByKey(key) {
+    findNodeByKey(sensorId) {
       const node = this.stage.findOne((node) => {
-        return node.getAttr("key") === key
+        return node.getAttr("sensorId") === sensorId
+      })
+      return node || ""
+    },
+    findNodeByPointer(sensorId, sensorPoint, nodetype) {
+      const node = this.stage.findOne((node) => {
+        return (
+          node.getAttr("sensorId") == sensorId &&
+          node.getAttr("sensorPoint") == sensorPoint &&
+          node.getAttr("nodetype") == nodetype
+        )
+      })
+      return node || ""
+    },
+    findNodeBySensorId(sensorId, nodetype) {
+      const node = this.stage.findOne((node) => {
+        return node.getAttr("sensorId") == sensorId && node.getAttr("nodetype") == nodetype
       })
       return node || ""
     },
@@ -279,14 +300,15 @@ export default {
       }
     },
     valueLabelRender(item, callback) {
-      const { height, width, nodetype, x, y, key, value, unit, icon, backgroundIcon } = item || {}
+      const { height, width, nodetype, x, y, sensorId, sensorPoint, value, unit, icon, backgroundIcon } = item || {}
       const textNode = new Konva.Text({
         fontSize: 16,
         text: `${value || ""} ${unit || ""}`,
         unit: unit,
         value: value,
         index: 2,
-        key,
+        sensorId,
+        sensorPoint,
         x,
         y,
         rotation: 0,
@@ -475,7 +497,7 @@ export default {
     },
     // 渲染单个自定义节点
     displaySingleNode({ attrs }) {
-      const { icon, x, y, backgroundImage, height, width, rotation, text, nodetype, statusList, key } = attrs
+      const { icon, x, y, backgroundImage, height, width, rotation, text, nodetype, statusList, sensorId } = attrs
       return new Promise((resolve, reject) => {
         try {
           if (nodetype === "textEditor") {
@@ -509,7 +531,8 @@ export default {
                 rotation: rotation || 0,
                 backgroundImage,
                 statusList,
-                key,
+                sensorId,
+                icon,
               })
               // 设置背景图
               const backImageObj = new window.Image()
@@ -548,30 +571,67 @@ export default {
         })
         .finally(() => {
           if (this.$route.query.viewMode === "detail") {
-            this.initDataFresh()
+            this.dataFreshHandler()
+            this.startFreshInterval()
           }
         })
     },
-    initDataFresh() {
+    startFreshInterval() {
+      this.intervalInstance = window.setInterval(() => {
+        this.dataFreshHandler()
+      }, this.freshStep)
+    },
+    dataFreshHandler() {
       const secretKey = process.env.VUE_APP_SECRET
-      const params = [
-        {
-          sensorId: 1394,
-          sensorPoint: 11,
-        },
-        {
-          sensorId: 1102,
-          sensorPoint: 0,
-        },
-      ]
-      const params2 = [1394, 1102]
+      // 获取所有valueLabel的节点
+      const pointerList = this.allNodeDatas
+        .filter((item) => {
+          return item.attrs.nodetype === "valueLabel"
+        })
+        .map((item) => {
+          return {
+            sensorId: item.attrs.sensorId,
+            sensorPoint: item.attrs.sensorPoint,
+          }
+        })
+      // 获取所有businessNode的节点
+      const sensorList = this.allNodeDatas
+        .filter((item) => {
+          return item.attrs.nodetype === "businessNode"
+        })
+        .map((item) => {
+          return item.attrs.sensorId
+        })
       // 获取所有点位信息
-      querySensorIndexList(secretKey, params).then((res) => {
-        console.log("xxx", res)
+      querySensorIndexList(secretKey, pointerList).then((res) => {
+        this.dealPointerDatas(res.data)
       })
       // 获取所有设备状态信息
-      queryDeviceStateList(secretKey, params2).then((res) => {
-        console.log("xxx2", res)
+      queryDeviceStateList(secretKey, sensorList).then((res) => {
+        this.dealStatusDatas(res.data)
+      })
+    },
+    // 处理传感器状态数据
+    dealStatusDatas(datas) {
+      datas.forEach((singleItem) => {
+        const { sensorId, tsStateV0 } = singleItem || {}
+        const currentNode = this.findNodeBySensorId(sensorId, "businessNode")
+        if (!currentNode) return
+        const { statusList } = currentNode.attrs
+        currentNode.attrs.icon = statusList[tsStateV0.id]
+        this.changeSingleNode(currentNode)
+      })
+    },
+    // 处理点位数据推送
+    dealPointerDatas(datas) {
+      datas.forEach((singleItem) => {
+        const { index, sensorId, value, unit } = singleItem || {}
+        const currentNode = this.findNodeByPointer(sensorId, index, "valueLabel")
+        if (!currentNode) return
+        currentNode.attrs.value = String(value)
+        currentNode.attrs.unit = unit
+        console.log("xxx-currentNode", currentNode)
+        this.changeSingleNode(currentNode)
       })
     },
     // 取消保存
@@ -783,14 +843,15 @@ export default {
           delta > 0 ? this.zoomout() : this.zoomin()
         })
     },
+    // detail模式下businessNode点击事件
     detailClickHandler(node) {
-      const { nodetype, targetUrl, key, icon } = node.attrs || {}
+      const { nodetype, targetUrl, sensorId, icon } = node.attrs || {}
       switch (nodetype) {
         case "linkButton":
           window.open(targetUrl, "_blank")
           break
         case "businessNode":
-          this.sensor.sensorId = key
+          this.sensor.sensorId = sensorId
           this.sensor.icon = icon
           this.sensor.dialogShow = true
           break
@@ -799,6 +860,7 @@ export default {
     // 点击&拖拽事件处理
     initClickHandler(Stage) {
       Stage.on("mousedown", (e) => {
+        debugger
         console.log("当前选择", e.target)
         // 如果点击的是transform的选择点，return，否则会死循环！
         if (e.target.attrs.name && e.target.attrs.name.includes("_anchor")) {
@@ -806,6 +868,8 @@ export default {
         }
         // 设置当前激活节点
         this.currentActiveShape = e.target
+        // 设置当前节点属性
+        this.currentActiveProps = e.target.attrs
         // 如果是viewMode = detail,则判断节点并打开弹窗
         if (this.$route.query && this.$route.query.viewMode === "detail") {
           // 取消所有节点的移动事件
@@ -813,8 +877,6 @@ export default {
           // 处理点击事件
           this.detailClickHandler(this.currentActiveShape)
         } else {
-          // 设置当前节点属性
-          this.currentActiveProps = e.target.attrs
           const ClickBlank = e.target === this.stage
           // 如果点击空白区域
           if (ClickBlank) {
@@ -1004,7 +1066,7 @@ export default {
                 width: 100,
                 radius: 50,
                 image: imageObj,
-                icon,
+                icon: currentItem.icon,
                 draggable: true,
                 id: this.GenNonDuplicateID(),
                 index: 1,
