@@ -105,7 +105,7 @@ export default {
   data() {
     return {
       intervalInstance: null,
-      freshStep: 60 * 1000,
+      freshStep: 5 * 1000,
       sensor: {
         dialogShow: false,
         title: "设备详情",
@@ -851,16 +851,17 @@ export default {
           window.open(targetUrl, "_blank")
           break
         case "businessNode":
-          this.sensor.sensorId = sensorId
-          this.sensor.icon = icon
-          this.sensor.dialogShow = true
+          if (sensorId) {
+            this.sensor.sensorId = sensorId
+            this.sensor.icon = icon
+            this.sensor.dialogShow = true
+          }
           break
       }
     },
     // 点击&拖拽事件处理
     initClickHandler(Stage) {
       Stage.on("mousedown", (e) => {
-        debugger
         console.log("当前选择", e.target)
         // 如果点击的是transform的选择点，return，否则会死循环！
         if (e.target.attrs.name && e.target.attrs.name.includes("_anchor")) {
@@ -1086,6 +1087,7 @@ export default {
     // contextmenu 事件处理
     initContextMenu(Stage) {
       const menuNode = document.getElementById("context_container")
+      let currentShape
       Stage.on("contextmenu", (e) => {
         // 阻止默认事件，否则无法弹出自定义menu
         e.evt.preventDefault()

@@ -168,8 +168,9 @@ export default {
         }
       }
     },
-    copyHandler() {
-      const targetUrl = "https://www.baidu.com"
+    copyHandler({ id }) {
+      const { origin, pathname } = location
+      const targetUrl = `${origin}${pathname}#/visualization/detail?id=${id}&viewMode=detail`
       copy2Clip(targetUrl)
     },
     // 组态保存后，自动刷新列表
