@@ -104,6 +104,7 @@ export default {
   mixins: [konvaMixins],
   data() {
     return {
+      freshInterval: null,
       intervalInstance: null,
       freshStep: 5 * 1000,
       sensor: {
@@ -164,6 +165,7 @@ export default {
   },
   beforeDestroy() {
     this.intervalInstance && window.clearInterval(this.intervalInstance)
+    this.freshInterval && window.clearInterval(this.freshInterval)
   },
   mounted() {
     /**
@@ -442,20 +444,43 @@ export default {
         }
       }
     },
+    base64ToUrl(base64, filename = "file") {
+      const arr = base64.split(",")
+      const mime = arr[0].match(/:(.*?);/)[1]
+      const suffix = mime.split("/")[1]
+      const bstr = atob(arr[1])
+      let n = bstr.length
+      const u8arr = new Uint8Array(n)
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n)
+      }
+      const file = new File([u8arr], `${filename}.${suffix}`, {
+        type: mime,
+      })
+      return URL.createObjectURL(file)
+    },
+    startGifFresh() {
+      if (this.freshInterval) return
+      this.freshInterval = window.setInterval(() => {
+        this.layer.draw()
+      }, 20)
+    },
     gifRender(item, callback) {
       const { height, width, icon, x, y } = item || {}
       const canvas = document.createElement("canvas")
       const that = this
       canvas.width = width || 100
       canvas.height = height || 100
-      function onDrawFrame(ctx, frame) {
-        // lodash.debounce((e) => {
-        ctx.drawImage(frame.buffer, 0, 0, 100, 100)
-        that.layer.draw()
-        // }, 100)
-      }
-      // gifler("@/assets/images/gufengji.gif").frames(canvas, onDrawFrame)
-      gifler(icon).frames(canvas, onDrawFrame)
+      // function onDrawFrame(ctx, frame) {
+      //   console.log("ctx.canvas.offsetWidth", ctx.canvas.offsetWidth)
+      //   ctx.canvas.width = ctx.canvas.offsetWidth
+      //   ctx.canvas.height = ctx.canvas.offsetHeight
+      //   ctx.drawImage(frame.buffer, 0, 0, 100, 100)
+      //   that.layer.draw()
+      // }
+      // gifler(icon).frames(canvas, onDrawFrame)
+      gifler(icon).animate(canvas)
+      this.startGifFresh()
       const Image = new Konva.Image({
         image: canvas,
         height: 100,
@@ -463,18 +488,18 @@ export default {
         radius: 50,
         icon: icon,
         draggable: true,
-        id: that.GenNonDuplicateID(),
+        id: this.GenNonDuplicateID(),
         index: 1,
         rotation: 0,
         backgroundImage: "",
         x,
         y,
       })
-      that.layer.add(Image)
+      this.layer.add(Image)
       if (!x && !y) {
-        Image.position(that.stage.getPointerPosition())
+        Image.position(this.stage.getPointerPosition())
       }
-      that.layer.draw()
+      this.layer.draw()
     },
     changeSingleNode(node) {
       const { icon, x, y, backgroundImage, height, width, rotation, text, value, unit, nodetype, targetUrl } =
