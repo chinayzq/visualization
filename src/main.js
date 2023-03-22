@@ -29,13 +29,6 @@ Object.keys(filters).forEach((key) => {
   Vue.filter(key, filters[key])
 })
 Vue.use(VueCookies)
-function initLocalCookies() {
-  const d = new Date()
-  d.setTime(d.getTime() + 365 * 24 * 60 * 60 * 1000)
-  const expires = "expires=" + d.toGMTString()
-  document.cookie = "virtual-token=" + process.env.VUE_APP_TOKEN + "; " + expires + ";path=/"
-}
-initLocalCookies()
 window.top.APP = new Vue({
   router,
   store,

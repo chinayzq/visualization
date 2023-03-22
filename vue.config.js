@@ -14,7 +14,7 @@ module.exports = {
   // 基本路径,上下文根？
   publicPath: process.env.VUE_APP_PUBLIC_PATH,
   // 输出文件目录o
-  outputDir: "scheduleCenter",
+  outputDir: "dist",
   // 放置生成的静态资源 (js、css、img、fonts) 的 (相对于 outputDir 的) 目录。
   assetsDir: "assets",
   // 指定生成的 index.html 的输出路径 (相对于 outputDir)。也可以是一个绝对路径。
@@ -49,7 +49,7 @@ module.exports = {
   devServer: {
     proxy: {
       "/requestUrl": {
-        target: "http://config.yineng-iot.com/", //API服务器的地址
+        target: "https://config.yineng-iot.com/", //API服务器的地址
         changeOrigin: true, // 是否跨域，虚拟的站点需要更管origin
         pathRewrite: {
           // '^/api'是一个正则表达式，表示要匹配请求的url中，全部'http://localhost:8081/api' 转接为 http://localhost:8081/

@@ -15,7 +15,13 @@
     </div>
 
     <div>
-      <finalTable ref="finalTableRef" :datas="dataset" @tableEventHandler="tableEventHandler" />
+      <finalTable ref="finalTableRef" :datas="dataset" @tableEventHandler="tableEventHandler">
+        <template v-slot:dynamicUrlSlot="row">
+          <span>
+            {{ row.datas.name }}
+          </span>
+        </template>
+      </finalTable>
     </div>
   </div>
 </template>
@@ -57,6 +63,11 @@ export default {
             label: "创建时间",
             width: "",
           },
+          {
+            prop: "dynamicUrl",
+            label: "绑定URL",
+            width: "",
+          },
           { prop: "operation", label: "操作", width: "300" },
         ],
         tableData: [],
@@ -73,6 +84,10 @@ export default {
         },
         // 表格内容配置
         detailConfig: {
+          dynamicUrl: {
+            type: "slot",
+            slotName: "dynamicUrlSlot",
+          },
           createDate: {
             type: "dateFormat",
           },

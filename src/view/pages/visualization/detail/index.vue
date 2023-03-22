@@ -463,10 +463,11 @@ export default {
       if (this.freshInterval) return
       this.freshInterval = window.setInterval(() => {
         this.layer.draw()
-      }, 20)
+      }, 200)
     },
     gifRender(item, callback) {
-      const { height, width, icon, x, y } = item || {}
+      const { height, width, icon, x, y, rotation } = item || {}
+      debugger
       const canvas = document.createElement("canvas")
       const that = this
       canvas.width = width || 100
@@ -483,14 +484,14 @@ export default {
       this.startGifFresh()
       const Image = new Konva.Image({
         image: canvas,
-        height: 100,
-        width: 100,
+        height: height || 100,
+        width: width || 100,
         radius: 50,
         icon: icon,
         draggable: true,
         id: this.GenNonDuplicateID(),
         index: 1,
-        rotation: 0,
+        rotation,
         backgroundImage: "",
         x,
         y,
