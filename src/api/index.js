@@ -179,9 +179,10 @@ export function deleteUrl(id) {
  * 获取传感器详情
  * @param params
  */
-export function getSensorDetail(params) {
+export function getSensorDetail(params, dynamicUrl) {
+  const url = dynamicUrl || "/newApi"
   return request({
-    url: `/newApi/api/apiConfigure/getSensorDetail`,
+    url: `${url}/api/apiConfigure/getSensorDetail`,
     method: "get",
     params,
   })
@@ -191,9 +192,10 @@ export function getSensorDetail(params) {
  * 数据推送 - 点位值
  * @param params
  */
-export function querySensorIndexList(secretKey, params) {
+export function querySensorIndexList(secretKey, params, dynamicUrl) {
+  const url = dynamicUrl || "/newApi"
   return request({
-    url: `/newApi/api/apiConfigure/querySensorIndexList?secretKey=${secretKey}`,
+    url: `${url}/api/apiConfigure/querySensorIndexList?secretKey=${secretKey}`,
     method: "post",
     data: params,
   })
@@ -203,9 +205,10 @@ export function querySensorIndexList(secretKey, params) {
  * 数据推送 - 数据状态
  * @param params
  */
-export function queryDeviceStateList(secretKey, params) {
+export function queryDeviceStateList(secretKey, params, dynamicUrl) {
+  const url = dynamicUrl || "/newApi"
   return request({
-    url: `/newApi/api/apiConfigure/queryDeviceStateList?secretKey=${secretKey}`,
+    url: `${url}/api/apiConfigure/queryDeviceStateList?secretKey=${secretKey}`,
     method: "post",
     data: params,
   })

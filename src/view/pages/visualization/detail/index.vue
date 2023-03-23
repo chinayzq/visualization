@@ -75,7 +75,7 @@
       append-to-body
       :title="sensor.title"
     >
-      <SensorDetail :sensorId="sensor.sensorId" :icon="sensor.icon" />
+      <SensorDetail :sensorId="sensor.sensorId" :dynamicUrl="saveDialog.dynamicUrl" :icon="sensor.icon" />
     </el-dialog>
   </div>
 </template>
@@ -591,6 +591,7 @@ export default {
             this.displayHandler(basicData, displayDatas)
             this.saveDialog.name = res.data.name
             this.saveDialog.description = res.data.description
+            this.saveDialog.dynamicUrl = res.data.dynamicUrl
           } else {
             this.$message.warning("获取场景失败！")
           }
@@ -609,6 +610,7 @@ export default {
     },
     dataFreshHandler() {
       const secretKey = process.env.VUE_APP_SECRET
+      const dynamicUrl = this.saveDialog.dynamicUrl
       // 获取所有valueLabel的节点
       const pointerList = this.allNodeDatas
         .filter((item) => {
@@ -629,11 +631,11 @@ export default {
           return item.attrs.sensorId
         })
       // 获取所有点位信息
-      querySensorIndexList(secretKey, pointerList).then((res) => {
+      querySensorIndexList(secretKey, pointerList, dynamicUrl).then((res) => {
         this.dealPointerDatas(res.data)
       })
       // 获取所有设备状态信息
-      queryDeviceStateList(secretKey, sensorList).then((res) => {
+      queryDeviceStateList(secretKey, sensorList, dynamicUrl).then((res) => {
         this.dealStatusDatas(res.data)
       })
     },
@@ -709,6 +711,7 @@ export default {
         params.lastModifiedBy = ""
         params.lastModifiedDate = ""
         params.updateByName = ""
+        params.dynamicUrl = this.saveDialog.dynamicUrl
       }
       // 存储背景图片信息
       params.basicData = JSON.stringify({

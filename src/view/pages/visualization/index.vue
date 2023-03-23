@@ -15,21 +15,35 @@
     </div>
 
     <div>
-      <finalTable ref="finalTableRef" :datas="dataset" @tableEventHandler="tableEventHandler">
-        <template v-slot:dynamicUrlSlot="row">
-          <span>
-            {{ row.datas.name }}
-          </span>
-        </template>
-      </finalTable>
+      <finalTable ref="finalTableRef" :datas="dataset" @tableEventHandler="tableEventHandler"></finalTable>
     </div>
+
+    <el-dialog :visible="dynamic.dialogShow" append-to-body :title="dynamic.title">
+      <el-form :model="dynamic.form" ref="dynamicForm" :rules="dynamicRules" label-width="100px">
+        <el-form-item label="动态Url" prop="name">
+          <el-select style="width: 100%" v-model="dynamic.form.dynamicUrl" placeholder="请选择动态Url" clearable>
+            <el-option
+              v-for="(item, index) in dynamicList"
+              :value="item.name"
+              :label="item.name"
+              :key="index"
+            ></el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cancelSave">取 消</el-button>
+        <el-button type="primary" @click="submitSave">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import finalTable from "@/components/FinalTable"
 import { copy2Clip } from "@/utils/utils.js"
-import { getVisualizationList, deleteVisualization } from "@/api"
+import { getVisualizationList, deleteVisualization, getUrlList, modifyVisualization } from "@/api"
+import { deepClone } from "@/utils/utils.js"
 export default {
   name: "visualizationList",
   components: {
@@ -84,10 +98,6 @@ export default {
         },
         // 表格内容配置
         detailConfig: {
-          dynamicUrl: {
-            type: "slot",
-            slotName: "dynamicUrlSlot",
-          },
           createDate: {
             type: "dateFormat",
           },
@@ -97,6 +107,15 @@ export default {
           operation: {
             type: "icon",
             iconList: [
+              {
+                actionType: "iconClick",
+                eventName: "bindUrl",
+                fontSize: "14px",
+                color: "#1A4CEC",
+                cursorPointer: "pointer",
+                iconName: "el-icon-edit",
+                tooltips: "绑定Url",
+              },
               {
                 actionType: "iconClick",
                 eventName: "copy",
@@ -146,6 +165,24 @@ export default {
         size: 10,
       },
       tableLoading: false,
+      dynamic: {
+        dislogShow: false,
+        title: "绑定Url",
+        editRow: {},
+        form: {
+          dynamicUrl: "",
+        },
+      },
+      dynamicList: [],
+      dynamicRules: {
+        dynamicUrl: [
+          {
+            required: true,
+            message: "请选择要绑定的动态Url",
+            trigger: "blur",
+          },
+        ],
+      },
     }
   },
   watch: {
@@ -155,11 +192,24 @@ export default {
   },
   created() {
     this.getListData()
+    this.getDynamicList()
   },
   mounted() {
     this.bindEvent()
   },
   methods: {
+    getDynamicList() {
+      getUrlList({
+        page: 1,
+        size: 100,
+      }).then((res) => {
+        if (res && res.code === 200) {
+          this.dynamicList = res.data.records || []
+        } else {
+          this.dynamicList = []
+        }
+      })
+    },
     tableEventHandler(datas) {
       if (datas.type === "goSearch") {
         this.listQuery = { ...this.listQuery, ...datas.params }
@@ -171,6 +221,9 @@ export default {
         this.getListData()
       } else if (datas.type === "iconClick") {
         switch (datas.eventName) {
+          case "bindUrl":
+            this.bindUrlHandler(datas.row)
+            break
           case "copy":
             this.copyHandler(datas.row)
             break
@@ -182,6 +235,34 @@ export default {
             break
         }
       }
+    },
+    cancelSave() {
+      this.dynamic.dislogShow = false
+      this.dynamic.form.dynamicUrl = ""
+    },
+    submitSave() {
+      this.$refs["dynamicForm"].validate((valid) => {
+        if (valid) {
+          const params = {
+            id: this.dynamic.editRow.id,
+            detail: this.dynamic.editRow.detail,
+            name: this.dynamic.editRow.name,
+            description: this.dynamic.editRow.description,
+            basicData: this.dynamic.editRow.basicData,
+            dynamicUrl: this.dynamic.form.dynamicUrl,
+          }
+          modifyVisualization(params).then((res) => {
+            this.$message.success("绑定Url成功！")
+            this.getListData()
+            this.cancelSave()
+          })
+        }
+      })
+    },
+    bindUrlHandler(datas) {
+      this.dynamic.editRow = deepClone(datas)
+      this.dynamic.form.dynamicUrl = datas.dynamicUrl
+      this.dynamic.dislogShow = true
     },
     copyHandler({ id }) {
       const { origin, pathname } = location

@@ -45,6 +45,12 @@ export default {
         return ""
       },
     },
+    dynamicUrl: {
+      type: String,
+      default() {
+        return ""
+      },
+    },
     icon: {
       type: String,
       default() {
@@ -74,12 +80,14 @@ export default {
     initSensorDetail(sensorId) {
       this.loadingFlag = true
       console.log("获取到传感器ID为：", sensorId)
-      getSensorDetail({
-        secretKey: process.env.VUE_APP_SECRET,
-        sensorId,
-      })
+      getSensorDetail(
+        {
+          secretKey: process.env.VUE_APP_SECRET,
+          sensorId,
+        },
+        dynamicUrl
+      )
         .then((res) => {
-          console.log(res)
           this.detailDatas = res.data
         })
         .finally(() => {
