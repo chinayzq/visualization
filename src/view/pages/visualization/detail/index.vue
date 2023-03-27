@@ -86,6 +86,7 @@ import asideMenu from "./asideMenu.vue"
 import detailProps from "./detailProps.vue"
 import SensorDetail from "./sensorDetail.vue"
 import { konvaMixins } from "@/mixins/konvaMixins.js"
+import { encrypt2RSA } from "@/utils/encrypt"
 // import Konva from "konva"
 import {
   getVisualizationDetail,
@@ -278,14 +279,14 @@ export default {
         })
     },
     textEditorRender(item, callback) {
-      const { height, width, x, y, text } = item || {}
+      const { height, width, x, y, text, index } = item || {}
       const textNode = new Konva.Text({
         nodetype: "textEditor",
         fontSize: 14,
         text,
         x,
         y,
-        index: 2,
+        index: index || 1,
         rotation: 0,
         draggable: true,
         fill: "#ffffff",
@@ -302,13 +303,13 @@ export default {
       }
     },
     valueLabelRender(item, callback) {
-      const { height, width, nodetype, x, y, sensorId, sensorPoint, value, unit, icon, backgroundIcon } = item || {}
+      const { height, width, nodetype, x, y, sensorId, sensorPoint, value, unit, icon, backgroundIcon, index } = item || {}
       const textNode = new Konva.Text({
         fontSize: 16,
         text: `${value || ""} ${unit || ""}`,
         unit: unit,
         value: value,
-        index: 2,
+        index: index || 1,
         sensorId,
         sensorPoint,
         x,
@@ -336,7 +337,7 @@ export default {
           x,
           y,
           draggable: true,
-          index: 1,
+          index: index || 1,
           rotation: 0,
           backgroundImage: "",
           nodetype: "backgroundImage",
@@ -374,11 +375,11 @@ export default {
       }
     },
     linkButtonRender(item, callback) {
-      const { height, width, nodetype, x, y, text, icon, backgroundIcon, targetUrl } = item || {}
+      const { height, width, nodetype, x, y, text, icon, backgroundIcon, targetUrl, index } = item || {}
       const textNode = new Konva.Text({
         fontSize: 16,
         text,
-        index: 2,
+        index: index || 1,
         x,
         y,
         rotation: 0,
@@ -405,7 +406,7 @@ export default {
           x,
           y,
           draggable: true,
-          index: 1,
+          index: index || 1,
           rotation: 0,
           backgroundImage: "",
           nodetype: "backgroundImage",
@@ -432,8 +433,8 @@ export default {
         })
         this.layer.add(Image)
         this.layer.add(textNode)
-        // textNode.setZIndex(2)
-        // Image.setZIndex(1)
+        // textNode.zIndex(2)
+        // Image.zIndex(1)
         if (!x && !y) {
           Image.position(this.stage.getPointerPosition())
           textNode.position(this.stage.getPointerPosition())
@@ -466,8 +467,8 @@ export default {
       }, 200)
     },
     gifRender(item, callback) {
-      const { height, width, icon, x, y, rotation } = item || {}
-      debugger
+      const { height, width, icon, x, y, rotation, sensorId } = item || {}
+      console.log('sensorId',sensorId)
       const canvas = document.createElement("canvas")
       const that = this
       canvas.width = width || 100
@@ -483,6 +484,7 @@ export default {
       gifler(icon).animate(canvas)
       this.startGifFresh()
       const Image = new Konva.Image({
+        nodetype: 'businessNode',
         image: canvas,
         height: height || 100,
         width: width || 100,
@@ -492,6 +494,7 @@ export default {
         id: this.GenNonDuplicateID(),
         index: 1,
         rotation,
+        sensorId,
         backgroundImage: "",
         x,
         y,
@@ -523,7 +526,7 @@ export default {
     },
     // 渲染单个自定义节点
     displaySingleNode({ attrs }) {
-      const { icon, x, y, backgroundImage, height, width, rotation, text, nodetype, statusList, sensorId } = attrs
+      const { icon, x, y, backgroundImage, height, width, rotation, text, nodetype, statusList, sensorId, index } = attrs
       return new Promise((resolve, reject) => {
         try {
           if (nodetype === "textEditor") {
@@ -553,7 +556,7 @@ export default {
                 top: x,
                 left: y,
                 draggable: true,
-                index: 1,
+                index: index || 1,
                 rotation: rotation || 0,
                 backgroundImage,
                 statusList,
@@ -591,7 +594,8 @@ export default {
             this.displayHandler(basicData, displayDatas)
             this.saveDialog.name = res.data.name
             this.saveDialog.description = res.data.description
-            this.saveDialog.dynamicUrl = res.data.dynamicUrl
+            const currentBaiscDatas = JSON.parse(res.data.basicData)
+            this.saveDialog.dynamicUrl = currentBaiscDatas.dynamicUrl
           } else {
             this.$message.warning("获取场景失败！")
           }
@@ -608,13 +612,32 @@ export default {
         this.dataFreshHandler()
       }, this.freshStep)
     },
+    publicKeyGenertion() {
+      const current = new Date()
+      const currentMonth = current.getMonth() + 1 < 10 ? `0${current.getMonth() + 1}` : current.getMonth() + 1
+      const currentDate = current.getDate() < 10 ? `0${current.getDate()}` : current.getDate()
+      const currentHours = current.getHours() < 10 ? `0${current.getHours()}` : current.getHours()
+      const currentMinutes = current.getMinutes() < 10 ? `0${current.getMinutes()}` : current.getMinutes()
+      return `${current.getFullYear()}!${currentMonth}!${currentDate} ${currentHours}&${currentMinutes}`
+    },
     dataFreshHandler() {
-      const secretKey = process.env.VUE_APP_SECRET
+      // const secretKey = process.env.VUE_APP_SECRET
+      // // 公钥：使用之前的
+      // // 还有一个入参str 当前时间YYYY!MM!dd HH&mm
+      // // const encryptStr = '';
+      // // const secretPublucKey = this.publicKeyGenertion()
+      // // const secretKey = encrypt2RSA(encryptStr, secretPublucKey)
+
       const dynamicUrl = this.saveDialog.dynamicUrl
+      const currentSecretKey = process.env.VUE_APP_SECRET
+      // 当前时间YYYY!MM!dd HH&mm + 公钥
+      const secretPublucKey = this.publicKeyGenertion()
+      const secretKey = encrypt2RSA(secretPublucKey, currentSecretKey)
+      console.log('secretKey1',secretKey)
       // 获取所有valueLabel的节点
       const pointerList = this.allNodeDatas
         .filter((item) => {
-          return item.attrs.nodetype === "valueLabel"
+          return item.attrs.nodetype === "valueLabel" && item.attrs.sensorId
         })
         .map((item) => {
           return {
@@ -625,7 +648,7 @@ export default {
       // 获取所有businessNode的节点
       const sensorList = this.allNodeDatas
         .filter((item) => {
-          return item.attrs.nodetype === "businessNode"
+          return item.attrs.nodetype === "businessNode" && item.attrs.sensorId
         })
         .map((item) => {
           return item.attrs.sensorId
@@ -941,7 +964,7 @@ export default {
           this.tr.nodes([e.target])
           this.initTransformHandler(e.target)
           // 获取当前节点的index，给tr设置index
-          this.tr.setZIndex(e.target.attrs.index)
+          this.tr.zIndex(e.target.attrs.index)
           this.layer.draw()
         }
       })
@@ -1146,18 +1169,20 @@ export default {
       })
       // 上移一层
       document.getElementById("up-button").addEventListener("click", () => {
+        if (!currentShape) return
         // 获取当前节点的index，和tr一并设置index
         let curObjIndex = ++currentShape.attrs.index
-        currentShape.setZIndex(curObjIndex)
-        this.tr.setZIndex(curObjIndex)
+        currentShape.zIndex(curObjIndex)
+        this.tr.zIndex(curObjIndex)
         this.layer.draw()
       })
       // 下移一层
       document.getElementById("down-button").addEventListener("click", () => {
+        if (!currentShape) return
         // 获取当前节点的index，和tr一并设置index
         let curObjIndex = --currentShape.attrs.index
-        currentShape.setZIndex(curObjIndex)
-        this.tr.setZIndex(curObjIndex)
+        currentShape.zIndex(curObjIndex)
+        this.tr.zIndex(curObjIndex)
         this.layer.draw()
       })
       // 复制节点

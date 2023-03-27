@@ -36,7 +36,6 @@
 
 <script>
 import { getSensorDetail } from "@/api"
-import { encrypt2RSA } from "@/utils/encrypt"
 export default {
   name: "sensorDetailDialog",
   props: {
@@ -81,17 +80,12 @@ export default {
     initSensorDetail(sensorId) {
       this.loadingFlag = true
       console.log("获取到传感器ID为：", sensorId)
-      const currentSecretKey = process.env.VUE_APP_SECRET
-      // 当前时间YYYY!MM!dd HH&mm + 公钥
-      const secretPublucKey = this.publicKeyGenertion()
-      const secretKey = encrypt2RSA(secretPublucKey, currentSecretKey)
-      console.log('secretKey2',secretKey)
       getSensorDetail(
         {
-          secretKey,
+          secretKey: process.env.VUE_APP_SECRET,
           sensorId,
         },
-        this.dynamicUrl
+        dynamicUrl
       )
         .then((res) => {
           this.detailDatas = res.data
@@ -99,14 +93,6 @@ export default {
         .finally(() => {
           this.loadingFlag = false
         })
-    },
-    publicKeyGenertion() {
-      const current = new Date()
-      const currentMonth = current.getMonth() + 1 < 10 ? `0${current.getMonth() + 1}` : current.getMonth() + 1
-      const currentDate = current.getDate() < 10 ? `0${current.getDate()}` : current.getDate()
-      const currentHours = current.getHours() < 10 ? `0${current.getHours()}` : current.getHours()
-      const currentMinutes = current.getMinutes() < 10 ? `0${current.getMinutes()}` : current.getMinutes()
-      return `${current.getFullYear()}!${currentMonth}!${currentDate} ${currentHours}&${currentMinutes}`
     },
   },
 }

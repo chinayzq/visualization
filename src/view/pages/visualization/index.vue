@@ -18,7 +18,7 @@
       <finalTable ref="finalTableRef" :datas="dataset" @tableEventHandler="tableEventHandler"></finalTable>
     </div>
 
-    <el-dialog :visible="dynamic.dialogShow" append-to-body :title="dynamic.title">
+    <el-dialog :visible="dynamic.dialogShow" width="600px" append-to-body :title="dynamic.title">
       <el-form :model="dynamic.form" ref="dynamicForm" :rules="dynamicRules" label-width="100px">
         <el-form-item label="动态Url" prop="name">
           <el-select style="width: 100%" v-model="dynamic.form.dynamicUrl" placeholder="请选择动态Url" clearable>
@@ -166,7 +166,7 @@ export default {
       },
       tableLoading: false,
       dynamic: {
-        dislogShow: false,
+        dialogShow: false,
         title: "绑定Url",
         editRow: {},
         form: {
@@ -237,19 +237,20 @@ export default {
       }
     },
     cancelSave() {
-      this.dynamic.dislogShow = false
+      this.dynamic.dialogShow = false
       this.dynamic.form.dynamicUrl = ""
     },
     submitSave() {
       this.$refs["dynamicForm"].validate((valid) => {
         if (valid) {
+          const currentBasicDats = JSON.parse(this.dynamic.editRow.basicData)
+          currentBasicDats.dynamicUrl = this.dynamic.form.dynamicUrl
           const params = {
             id: this.dynamic.editRow.id,
             detail: this.dynamic.editRow.detail,
             name: this.dynamic.editRow.name,
             description: this.dynamic.editRow.description,
-            basicData: this.dynamic.editRow.basicData,
-            dynamicUrl: this.dynamic.form.dynamicUrl,
+            basicData: JSON.stringify(currentBasicDats),
           }
           modifyVisualization(params).then((res) => {
             this.$message.success("绑定Url成功！")
@@ -260,9 +261,10 @@ export default {
       })
     },
     bindUrlHandler(datas) {
+      const currentBasicDats = JSON.parse(datas.basicData)
       this.dynamic.editRow = deepClone(datas)
-      this.dynamic.form.dynamicUrl = datas.dynamicUrl
-      this.dynamic.dislogShow = true
+      this.dynamic.form.dynamicUrl = currentBasicDats.dynamicUrl
+      this.dynamic.dialogShow = true
     },
     copyHandler({ id }) {
       const { origin, pathname } = location

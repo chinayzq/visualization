@@ -179,7 +179,7 @@ export function deleteUrl(id) {
  * 获取传感器详情
  * @param params
  */
-export function getSensorDetail(params, dynamicUrl) {
+export function getSensorDetail( params, dynamicUrl) {
   const url = dynamicUrl || "/newApi"
   return request({
     url: `${url}/api/apiConfigure/getSensorDetail`,
