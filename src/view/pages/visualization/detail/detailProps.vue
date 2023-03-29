@@ -120,7 +120,15 @@
       <el-tab-pane label="数据" name="second">
         <el-form label-position="top" label-width="100%" :model="formLabelAlign">
           <el-row :gutter="24">
-            <el-form-item label="传感器ID(sensorId)">
+            <el-form-item
+              label="传感器ID(sensorId)"
+              v-if="
+                currentActiveShape &&
+                currentActiveShape.attrs &&
+                currentActiveShape.attrs.nodetype &&
+                ['businessNode', 'valueLabel'].includes(currentActiveShape.attrs.nodetype)
+              "
+            >
               <el-input
                 v-model="formLabelAlign.sensorId"
                 @input="dataItemChange('sensorId', formLabelAlign.sensorId)"

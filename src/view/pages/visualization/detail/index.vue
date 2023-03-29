@@ -303,7 +303,8 @@ export default {
       }
     },
     valueLabelRender(item, callback) {
-      const { height, width, nodetype, x, y, sensorId, sensorPoint, value, unit, icon, backgroundIcon, index } = item || {}
+      const { height, width, nodetype, x, y, sensorId, sensorPoint, value, unit, icon, backgroundIcon, index } =
+        item || {}
       const textNode = new Konva.Text({
         fontSize: 16,
         text: `${value || ""} ${unit || ""}`,
@@ -468,7 +469,7 @@ export default {
     },
     gifRender(item, callback) {
       const { height, width, icon, x, y, rotation, sensorId } = item || {}
-      console.log('sensorId',sensorId)
+      console.log("sensorId", sensorId)
       const canvas = document.createElement("canvas")
       const that = this
       canvas.width = width || 100
@@ -484,7 +485,7 @@ export default {
       gifler(icon).animate(canvas)
       this.startGifFresh()
       const Image = new Konva.Image({
-        nodetype: 'businessNode',
+        nodetype: "businessNode",
         image: canvas,
         height: height || 100,
         width: width || 100,
@@ -526,7 +527,8 @@ export default {
     },
     // 渲染单个自定义节点
     displaySingleNode({ attrs }) {
-      const { icon, x, y, backgroundImage, height, width, rotation, text, nodetype, statusList, sensorId, index } = attrs
+      const { icon, x, y, backgroundImage, height, width, rotation, text, nodetype, statusList, sensorId, index } =
+        attrs
       return new Promise((resolve, reject) => {
         try {
           if (nodetype === "textEditor") {
@@ -613,13 +615,13 @@ export default {
       }, this.freshStep)
     },
     publicKeyGenertion() {
-      const current = new Date()
-      const currentMonth = current.getMonth() + 1 < 10 ? `0${current.getMonth() + 1}` : current.getMonth() + 1
-      const currentDate = current.getDate() < 10 ? `0${current.getDate()}` : current.getDate()
-      const currentHours = current.getHours() < 10 ? `0${current.getHours()}` : current.getHours()
-      const currentMinutes = current.getMinutes() < 10 ? `0${current.getMinutes()}` : current.getMinutes()
-      return `${current.getFullYear()}!${currentMonth}!${currentDate} ${currentHours}&${currentMinutes}`
-    },
+      const current = new Date()
+      const currentMonth = current.getMonth() + 1 < 10 ? `0${current.getMonth() + 1}` : current.getMonth() + 1
+      const currentDate = current.getDate() < 10 ? `0${current.getDate()}` : current.getDate()
+      const currentHours = current.getHours() < 10 ? `0${current.getHours()}` : current.getHours()
+      const currentMinutes = current.getMinutes() < 10 ? `0${current.getMinutes()}` : current.getMinutes()
+      return `${current.getFullYear()}!${currentMonth}!${currentDate} ${currentHours}&${currentMinutes}`
+    },
     dataFreshHandler() {
       // const secretKey = process.env.VUE_APP_SECRET
       // // 公钥：使用之前的
@@ -633,7 +635,7 @@ export default {
       // 当前时间YYYY!MM!dd HH&mm + 公钥
       const secretPublucKey = this.publicKeyGenertion()
       const secretKey = encrypt2RSA(secretPublucKey, currentSecretKey)
-      console.log('secretKey1',secretKey)
+      console.log("secretKey1", secretKey)
       // 获取所有valueLabel的节点
       const pointerList = this.allNodeDatas
         .filter((item) => {
@@ -812,14 +814,14 @@ export default {
     zoomout() {
       const stepCount = this.scale + this.scaleStep
       // 最大放大到300%
-      if (stepCount > 3) return
+      if (stepCount > 1.2) return
       $(".konvajs-content").css("transform", "scale(" + stepCount + ")")
       this.scale = stepCount
     },
     // 比例縮小
     zoomin() {
       const stepCount = this.scale - this.scaleStep
-      if (stepCount < 0.1) return
+      if (stepCount < 0.8) return
       $(".konvajs-content").css("transform", "scale(" + stepCount + ")")
       this.scale = stepCount
     },
@@ -1152,7 +1154,7 @@ export default {
         // show menu
         menuNode.style.display = "initial"
         var containerRect = Stage.container().getBoundingClientRect()
-        menuNode.style.top = containerRect.top + Stage.getPointerPosition().y + 4 + this.backgroundTop + "px"
+        menuNode.style.top = containerRect.top + Stage.getPointerPosition().y + this.backgroundTop + "px"
         menuNode.style.left = containerRect.left + Stage.getPointerPosition().x + this.backgroundLeft + 4 + "px"
       })
       // 点击空白处隐藏menu
@@ -1250,6 +1252,7 @@ export default {
 
 <style lang="less" scoped>
 .visualization_detail_comp {
+  position: relative;
   height: 100%;
   .preview_bar {
     height: 50px;
