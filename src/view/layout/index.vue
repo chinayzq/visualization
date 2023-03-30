@@ -44,7 +44,7 @@ export default {
 
 <style lang="less" scoped>
 .root-container {
-  height: 100%;
+  height: 100vh;
   .main-container {
     display: flex;
     height: 100%;

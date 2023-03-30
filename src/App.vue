@@ -1,7 +1,9 @@
 <template>
-  <ScreenAdapter id="app">
+  <!-- <ScreenAdapter id="app">
+  </ScreenAdapter> -->
+  <div id="app">
     <router-view />
-  </ScreenAdapter>
+  </div>
 </template>
 
 <script>

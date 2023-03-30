@@ -3,7 +3,7 @@ node_modules
 /scheduleCenter
 /dist
 scheduleCenter.zip
-dist.zip
+*.zip
 
 # local env files
 .env.local

@@ -55,6 +55,33 @@
                   ></el-input-number>
                 </el-form-item>
               </el-col>
+              <template
+                v-if="
+                  currentActiveShape &&
+                  currentActiveShape.attrs &&
+                  currentActiveShape.attrs.nodetype &&
+                  ['textEditor'].includes(currentActiveShape.attrs.nodetype)
+                "
+              >
+                <el-col :span="12">
+                  <el-form-item label="颜色">
+                    <el-color-picker
+                      @change="formItemChange('fill', formLabelAlign.fill)"
+                      v-model="formLabelAlign.fill"
+                    ></el-color-picker>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="字体大小">
+                    <el-input-number
+                      v-model="formLabelAlign.fontSize"
+                      controls-position="right"
+                      size="small"
+                      @input="formItemChange('fontSize', formLabelAlign.fontSize)"
+                    ></el-input-number>
+                  </el-form-item>
+                </el-col>
+              </template>
             </el-row>
             <el-row
               v-if="
@@ -100,7 +127,7 @@
               </el-col>
             </el-row>
           </div>
-          <el-row :gutter="24">
+          <el-row :gutter="24" v-if="showBackgroundSetting(currentActiveShape)">
             <el-col :span="24">
               <el-form-item label="背景图片">
                 <div class="background_img_container" v-show="formLabelAlign.backgroundImage">
@@ -209,33 +236,21 @@ export default {
     },
   },
   methods: {
+    showBackgroundSetting(currentActiveShape) {
+      if (currentActiveShape) {
+        if (["textEditor", "valueLabel", "linkButton"].includes(currentActiveShape.attrs.nodetype)) {
+          return false
+        }
+      }
+      return true
+    },
     dataItemChange(key, value) {
       this.currentActiveShape.attrs[key] = value
       this.$emit("changeSingleNode", this.currentActiveShape)
     },
     formItemChange(type, value) {
       if (this.currentActiveShape) {
-        // 给节点设置
-        switch (type) {
-          case "x":
-            this.currentActiveShape.x(value)
-            break
-          case "y":
-            this.currentActiveShape.y(value)
-            break
-          case "height":
-            this.currentActiveShape.height(value)
-            break
-          case "width":
-            this.currentActiveShape.width(value)
-            break
-          case "rotation":
-            this.currentActiveShape.rotation(value)
-            break
-          case "text":
-            this.currentActiveShape.text(value)
-            break
-        }
+        this.currentActiveShape[type](value)
       } else {
         // 给背景设置
         this.$emit("setBackground", { type, datas: value })

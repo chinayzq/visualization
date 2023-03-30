@@ -236,6 +236,12 @@ export default {
       })
       return node || ""
     },
+    findNodeById(id) {
+      const node = this.stage.findOne((node) => {
+        return node.getAttr("id") == id
+      })
+      return node || ""
+    },
     initData() {
       const { id } = this.$route.query
       if (!id) {
@@ -278,18 +284,19 @@ export default {
           this.graphLoading = false
         })
     },
-    textEditorRender(item, callback) {
-      const { height, width, x, y, text, index } = item || {}
+    textEditorRender(item, callback, newId) {
+      const { height, width, x, y, text, index, id, fontSize, fill } = item || {}
       const textNode = new Konva.Text({
         nodetype: "textEditor",
-        fontSize: 14,
         text,
         x,
         y,
+        id: newId || id || this.GenNonDuplicateID(),
         index: index || 1,
         rotation: 0,
         draggable: true,
-        fill: "#ffffff",
+        fill: fill || "#ffffff",
+        fontSize: fontSize || 12,
         height: Number(height),
         width: Number(width),
       })
@@ -302,23 +309,24 @@ export default {
         callback()
       }
     },
-    valueLabelRender(item, callback) {
+    valueLabelRender(item, callback, newId) {
       const { height, width, nodetype, x, y, sensorId, sensorPoint, value, unit, icon, backgroundIcon, index } =
         item || {}
+      const currentId = newId || item.id || this.GenNonDuplicateID()
       const textNode = new Konva.Text({
         fontSize: 16,
         text: `${value || ""} ${unit || ""}`,
         unit: unit,
         value: value,
         index: index || 1,
-        sensorId,
-        sensorPoint,
+        sensorId: newId ? "" : sensorId,
+        sensorPoint: newId ? "" : sensorPoint,
         x,
         y,
         rotation: 0,
         draggable: true,
         fill: "#ffffff",
-        id: item.id || this.GenNonDuplicateID(),
+        id: currentId,
         height: Number(height),
         width: Number(width),
         verticalAlign: "middle",
@@ -337,6 +345,7 @@ export default {
           icon: icon || backgroundIcon,
           x,
           y,
+          id: `${currentId}_background`,
           draggable: true,
           index: index || 1,
           rotation: 0,
@@ -375,8 +384,15 @@ export default {
         }
       }
     },
-    linkButtonRender(item, callback) {
+    linkButtonAndLabelDelete(node) {
+      const { id } = node.attrs || {}
+      const backgroundNode = this.findNodeById(`${id}_background`)
+      backgroundNode.destroy()
+      this.layer.draw()
+    },
+    linkButtonRender(item, callback, newId) {
       const { height, width, nodetype, x, y, text, icon, backgroundIcon, targetUrl, index } = item || {}
+      const currentId = newId || item.id || this.GenNonDuplicateID()
       const textNode = new Konva.Text({
         fontSize: 16,
         text,
@@ -386,14 +402,14 @@ export default {
         rotation: 0,
         draggable: true,
         fill: "#ffffff",
-        id: item.id || this.GenNonDuplicateID(),
+        id: currentId,
         height: Number(height),
         width: Number(width),
         verticalAlign: "middle",
         align: "center",
         nodetype,
         backgroundIcon: icon || backgroundIcon,
-        targetUrl,
+        targetUrl: newId ? "" : targetUrl,
       })
       const imageObj = new window.Image()
       imageObj.src = icon || backgroundIcon
@@ -406,6 +422,7 @@ export default {
           icon: icon || backgroundIcon,
           x,
           y,
+          id: `${currentId}_background`,
           draggable: true,
           index: index || 1,
           rotation: 0,
@@ -526,19 +543,19 @@ export default {
       }
     },
     // 渲染单个自定义节点
-    displaySingleNode({ attrs }) {
+    displaySingleNode({ attrs }, newId) {
       const { icon, x, y, backgroundImage, height, width, rotation, text, nodetype, statusList, sensorId, index } =
         attrs
       return new Promise((resolve, reject) => {
         try {
           if (nodetype === "textEditor") {
-            this.textEditorRender(attrs, resolve)
+            this.textEditorRender(attrs, resolve, newId)
           } else if (nodetype === "linkButton") {
-            this.linkButtonRender(attrs, resolve)
+            this.linkButtonRender(attrs, resolve, newId)
           } else if (nodetype === "valueLabel") {
-            this.valueLabelRender(attrs, resolve)
+            this.valueLabelRender(attrs, resolve, newId)
           } else if (attrs.icon && attrs.icon.includes("data:image/gif")) {
-            this.gifRender(attrs, resolve)
+            this.gifRender(attrs, resolve, newId)
           } else {
             // 如果是按钮的背景图Image对象，不需要再次渲染
             if (["backgroundImage"].includes(nodetype)) {
@@ -562,7 +579,7 @@ export default {
                 rotation: rotation || 0,
                 backgroundImage,
                 statusList,
-                sensorId,
+                sensorId: newId ? "" : sensorId,
                 icon,
               })
               // 设置背景图
@@ -1153,9 +1170,11 @@ export default {
         currentShape = e.target
         // show menu
         menuNode.style.display = "initial"
-        var containerRect = Stage.container().getBoundingClientRect()
-        menuNode.style.top = containerRect.top + Stage.getPointerPosition().y + this.backgroundTop + "px"
-        menuNode.style.left = containerRect.left + Stage.getPointerPosition().x + this.backgroundLeft + 4 + "px"
+        // var containerRect = Stage.container().getBoundingClientRect()
+        // menuNode.style.top = containerRect.top + Stage.getPointerPosition().y + this.backgroundTop + "px"
+        // menuNode.style.left = containerRect.left + Stage.getPointerPosition().x + this.backgroundLeft + 4 + "px"
+        menuNode.style.top = e.evt.clientY + "px"
+        menuNode.style.left = e.evt.clientX + "px"
       })
       // 点击空白处隐藏menu
       window.addEventListener("click", () => {
@@ -1165,6 +1184,14 @@ export default {
       // 删除
       document.getElementById("delete-button").addEventListener("click", () => {
         // 销毁节点 清空tr节点
+        const { nodetype } = currentShape.attrs
+        console.log("nodetype", nodetype)
+        switch (nodetype) {
+          case "linkButton":
+          case "valueLabel":
+            this.linkButtonAndLabelDelete(currentShape)
+            break
+        }
         currentShape.destroy()
         this.tr.nodes([])
         this.layer.draw()
@@ -1190,7 +1217,13 @@ export default {
       // 复制节点
       document.getElementById("copy-button").addEventListener("click", () => {
         // 获取当前节点的index，和tr一并设置index
-        const { icon, width, height, index, scaleX, scaleY, rotation } = currentShape.attrs
+        const { x, y } = this.stage.getPointerPosition()
+        currentShape.attrs.x = x + 20
+        currentShape.attrs.y = y + 20
+        this.displaySingleNode(currentShape, this.GenNonDuplicateID())
+        return
+        console.log("this.stage.getPointerPosition()", this.stage.getPointerPosition())
+        const { icon, width, height, index, scaleX, scaleY, rotation, nodetype } = currentShape.attrs
         // 初始化image对象
         const imageObj = new window.Image()
         imageObj.src = icon
@@ -1253,7 +1286,7 @@ export default {
 <style lang="less" scoped>
 .visualization_detail_comp {
   position: relative;
-  height: 100%;
+  height: 100vh;
   .preview_bar {
     height: 50px;
     line-height: 50px;
