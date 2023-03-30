@@ -32,6 +32,7 @@
           :currentActiveProps="currentActiveProps"
           @changeSingleNode="changeSingleNode"
           @setBackground="setBackground"
+          @upOrDown="upOrDownHandler"
         />
       </div>
     </div>
@@ -44,7 +45,16 @@
       </div>
     </div>
     <!-- 保存弹窗 -->
-    <el-dialog :visible="saveDialog.saveDialogShow" append-to-body :title="saveDialog.title">
+    <el-dialog
+      :visible="saveDialog.saveDialogShow"
+      append-to-body
+      :title="saveDialog.title"
+      :before-close="
+        () => {
+          saveDialog.saveDialogShow = false
+        }
+      "
+    >
       <el-form :model="saveDialog" ref="chartForm" :rules="scenceRules" label-width="100px">
         <el-form-item label="场景名称" prop="name">
           <el-input v-model="saveDialog.name" auto-complete="off" placeholder="请输入场景名称"></el-input>
@@ -87,6 +97,7 @@ import detailProps from "./detailProps.vue"
 import SensorDetail from "./sensorDetail.vue"
 import { konvaMixins } from "@/mixins/konvaMixins.js"
 import { encrypt2RSA } from "@/utils/encrypt"
+import { deepClone } from "@/utils/utils.js"
 // import Konva from "konva"
 import {
   getVisualizationDetail,
@@ -178,41 +189,37 @@ export default {
     const { viewMode } = this.$route.query
     this.previewFlag = viewMode || "edit"
     this.initData()
-    // this.testDataPush()
   },
   methods: {
-    testDataPush() {
-      // valueLabel测试
-      // setTimeout(() => {
-      //   let datas = {
-      //     sensorId: "testKey1",
-      //     value: 100,
-      //   }
-      //   console.log("推送数据来了！", datas)
-      //   this.dataPushHandler(datas)
-      // }, 5000)
-      // node切换图片测试
-      setTimeout(() => {
-        let datas = {
-          sensorId: "testKey2",
-          state: "stop",
+    upOrDownHandler(type, currentShape) {
+      const { nodetype, id } = currentShape.attrs
+      if (type === "up") {
+        if (["valueLabel", "linkButton"].includes(nodetype)) {
+          const backgroundNode = this.findNodeById(`${id}_background`)
+          backgroundNode && backgroundNode.moveToTop()
         }
-        console.log("推送数据来了！", datas)
-        this.dataPushHandler(datas)
-      }, 5000)
-    },
-    dataPushHandler({ sensorId, value, state }) {
-      const currentNode = this.findNodeByKey(sensorId)
-      if (!currentNode) return
-      switch (currentNode.attrs.nodetype) {
-        case "valueLabel":
-          currentNode.attrs["value"] = value
-          break
-        case "businessNode":
-          currentNode.attrs["icon"] = currentNode.attrs.statusList[state]
-          break
+        currentShape.moveToTop()
+      } else {
+        currentShape.moveToBottom()
+        if (["valueLabel", "linkButton"].includes(nodetype)) {
+          const backgroundNode = this.findNodeById(`${id}_background`)
+          backgroundNode && backgroundNode.moveToBottom()
+        }
       }
-      this.changeSingleNode(currentNode)
+      // let curObjIndex = currentShape.attrs.index
+      // const { nodetype, id } = currentShape.attrs
+      // if (type === "up") {
+      //   curObjIndex += 2
+      // } else {
+      //   curObjIndex -= 2
+      // }
+      // if (["valueLabel", "linkButton"].includes(nodetype)) {
+      //   const backgroundNode = this.findNodeById(`${id}_background`)
+      //   backgroundNode && backgroundNode.zIndex(curObjIndex - 1)
+      // }
+      // currentShape.zIndex(curObjIndex)
+      // this.tr.zIndex(curObjIndex)
+      // this.layer.draw()
     },
     findNodeByKey(sensorId) {
       const node = this.stage.findOne((node) => {
@@ -286,13 +293,14 @@ export default {
     },
     textEditorRender(item, callback, newId) {
       const { height, width, x, y, text, index, id, fontSize, fill } = item || {}
+      const currentIndex = Number(index) || 1
       const textNode = new Konva.Text({
         nodetype: "textEditor",
         text,
         x,
         y,
         id: newId || id || this.GenNonDuplicateID(),
-        index: index || 1,
+        index: currentIndex,
         rotation: 0,
         draggable: true,
         fill: fill || "#ffffff",
@@ -313,12 +321,13 @@ export default {
       const { height, width, nodetype, x, y, sensorId, sensorPoint, value, unit, icon, backgroundIcon, index } =
         item || {}
       const currentId = newId || item.id || this.GenNonDuplicateID()
+      const currentIndex = Number(index) || 1
       const textNode = new Konva.Text({
         fontSize: 16,
         text: `${value || ""} ${unit || ""}`,
         unit: unit,
         value: value,
-        index: index || 1,
+        index: currentIndex,
         sensorId: newId ? "" : sensorId,
         sensorPoint: newId ? "" : sensorPoint,
         x,
@@ -347,7 +356,7 @@ export default {
           y,
           id: `${currentId}_background`,
           draggable: true,
-          index: index || 1,
+          index: currentIndex,
           rotation: 0,
           backgroundImage: "",
           nodetype: "backgroundImage",
@@ -393,10 +402,11 @@ export default {
     linkButtonRender(item, callback, newId) {
       const { height, width, nodetype, x, y, text, icon, backgroundIcon, targetUrl, index } = item || {}
       const currentId = newId || item.id || this.GenNonDuplicateID()
+      const currentIndex = Number(index) || 1
       const textNode = new Konva.Text({
         fontSize: 16,
         text,
-        index: index || 1,
+        index: currentIndex + 1,
         x,
         y,
         rotation: 0,
@@ -424,7 +434,7 @@ export default {
           y,
           id: `${currentId}_background`,
           draggable: true,
-          index: index || 1,
+          index: currentIndex,
           rotation: 0,
           backgroundImage: "",
           nodetype: "backgroundImage",
@@ -484,9 +494,11 @@ export default {
         this.layer.draw()
       }, 200)
     },
-    gifRender(item, callback) {
-      const { height, width, icon, x, y, rotation, sensorId } = item || {}
+    gifRender(item, callback, newId) {
+      const { height, width, icon, x, y, rotation, sensorId, index } = item || {}
       console.log("sensorId", sensorId)
+      const currentId = newId || item.id || this.GenNonDuplicateID()
+      const currentIndex = Number(index) || 1
       const canvas = document.createElement("canvas")
       const that = this
       canvas.width = width || 100
@@ -509,10 +521,10 @@ export default {
         radius: 50,
         icon: icon,
         draggable: true,
-        id: this.GenNonDuplicateID(),
-        index: 1,
+        id: currentId,
+        index: currentIndex,
         rotation,
-        sensorId,
+        sensorId: newId ? '' : sensorId,
         backgroundImage: "",
         x,
         y,
@@ -524,7 +536,7 @@ export default {
       this.layer.draw()
     },
     changeSingleNode(node) {
-      const { icon, x, y, backgroundImage, height, width, rotation, text, value, unit, nodetype, targetUrl } =
+      const { icon, x, y, backgroundImage, height, width, rotation, text, value, unit, nodetype, targetUrl, sensorId } =
         node.attrs
       switch (nodetype) {
         case "valueLabel":
@@ -534,6 +546,10 @@ export default {
           node.attrs["targetUrl"] = targetUrl
           break
         case "businessNode":
+          if (icon && icon.includes("data:image/gif")) {
+            node.attrs['sensorId'] = sensorId
+            return 
+          }
           const imageObj = new window.Image()
           imageObj.src = icon
           imageObj.onload = () => {
@@ -575,7 +591,7 @@ export default {
                 top: x,
                 left: y,
                 draggable: true,
-                index: index || 1,
+                index: Number(index) || 1,
                 rotation: rotation || 0,
                 backgroundImage,
                 statusList,
@@ -874,6 +890,31 @@ export default {
             e.preventDefault()
             this.previewFlag = "edit"
           }
+          if (e.keyCode == 46) {
+            if (!this.currentActiveShape) {
+              this.$message.warning("请选中节点后再删除")
+              return
+            }
+            this.nodeDeleteHandler(this.currentActiveShape)
+          }
+          if (e.ctrlKey && e.keyCode == 67) {
+            if (this.currentActiveShape) {
+              this.$message.success("已复制节点！")
+              this.copyDatas = this.currentActiveShape
+            } else {
+              console.log("没有激活节点")
+            }
+          }
+          if (e.ctrlKey && e.keyCode == 86) {
+            if (this.copyDatas) {
+              // const { x, y } = this.stage.getPointerPosition()
+              this.copyDatas.attrs.x += 20
+              this.copyDatas.attrs.y += 20
+              this.displaySingleNode(this.copyDatas, this.GenNonDuplicateID())
+            } else {
+              console.log("没有复制的节点")
+            }
+          }
         })
       // 改变窗口大小重新初始化画布和事件
       window.onresize = () => {
@@ -1115,19 +1156,20 @@ export default {
         //我们可以手动注册：
         this.stage.setPointersPositions(e)
         // 获取当前拖动图片的icon
-        const { icon, nodetype, text, height, width, item } = this.currentDragItem
+        const currentDrogNode = deepClone(this.currentDragItem)
+        const { icon, nodetype, text, height, width, item } = currentDrogNode
         const currentItem = JSON.parse(item)
         if (nodetype === "textEditor") {
           // 纯展示文本框
-          this.textEditorRender(this.currentDragItem)
+          this.textEditorRender(currentDrogNode)
         } else if (nodetype === "valueLabel") {
           // 带有边框，能更新数值的文本框
-          this.valueLabelRender(this.currentDragItem)
+          this.valueLabelRender(currentDrogNode)
         } else if (nodetype === "linkButton") {
-          this.linkButtonRender(this.currentDragItem)
+          this.linkButtonRender(currentDrogNode)
         } else {
           if (currentItem.icon.includes("data:image/gif")) {
-            this.gifRender(this.currentDragItem)
+            this.gifRender(currentDrogNode)
           } else {
             // 初始化image对象
             const imageObj = new window.Image()
@@ -1184,35 +1226,18 @@ export default {
       // 删除
       document.getElementById("delete-button").addEventListener("click", () => {
         // 销毁节点 清空tr节点
-        const { nodetype } = currentShape.attrs
-        console.log("nodetype", nodetype)
-        switch (nodetype) {
-          case "linkButton":
-          case "valueLabel":
-            this.linkButtonAndLabelDelete(currentShape)
-            break
-        }
-        currentShape.destroy()
-        this.tr.nodes([])
-        this.layer.draw()
+        this.nodeDeleteHandler(currentShape)
       })
       // 上移一层
       document.getElementById("up-button").addEventListener("click", () => {
         if (!currentShape) return
-        // 获取当前节点的index，和tr一并设置index
-        let curObjIndex = ++currentShape.attrs.index
-        currentShape.zIndex(curObjIndex)
-        this.tr.zIndex(curObjIndex)
-        this.layer.draw()
+        this.upOrDownHandler("up", currentShape)
       })
       // 下移一层
       document.getElementById("down-button").addEventListener("click", () => {
         if (!currentShape) return
         // 获取当前节点的index，和tr一并设置index
-        let curObjIndex = --currentShape.attrs.index
-        currentShape.zIndex(curObjIndex)
-        this.tr.zIndex(curObjIndex)
-        this.layer.draw()
+        this.upOrDownHandler("down", currentShape)
       })
       // 复制节点
       document.getElementById("copy-button").addEventListener("click", () => {
@@ -1221,32 +1246,20 @@ export default {
         currentShape.attrs.x = x + 20
         currentShape.attrs.y = y + 20
         this.displaySingleNode(currentShape, this.GenNonDuplicateID())
-        return
-        console.log("this.stage.getPointerPosition()", this.stage.getPointerPosition())
-        const { icon, width, height, index, scaleX, scaleY, rotation, nodetype } = currentShape.attrs
-        // 初始化image对象
-        const imageObj = new window.Image()
-        imageObj.src = icon
-        imageObj.onload = () => {
-          const Image = new Konva.Image({
-            height,
-            width,
-            radius: 50,
-            image: imageObj,
-            icon,
-            draggable: true,
-            id: this.GenNonDuplicateID(),
-            index,
-            rotation,
-            scaleX,
-            scaleY,
-          })
-          this.layer.add(Image)
-          Image.position(this.stage.getPointerPosition())
-          // this.layer.add(Transformer);
-          this.layer.draw()
-        }
       })
+    },
+    nodeDeleteHandler(currentShape) {
+      const { nodetype } = currentShape.attrs
+      console.log("nodetype", nodetype)
+      switch (nodetype) {
+        case "linkButton":
+        case "valueLabel":
+          this.linkButtonAndLabelDelete(currentShape)
+          break
+      }
+      currentShape.destroy()
+      this.tr.nodes([])
+      this.layer.draw()
     },
     // 初始化Konva
     initKonva(width, height) {

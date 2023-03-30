@@ -83,6 +83,18 @@
                 </el-col>
               </template>
             </el-row>
+            <template v-if="currentActiveShape && currentActiveShape.attrs && currentActiveShape.attrs.nodetype">
+              <el-row :gutter="24">
+                <el-col :span="12">
+                  <el-button size="mini" type="primary" @click="upOrDown('up', currentActiveShape)">上移一层</el-button>
+                </el-col>
+                <el-col :span="12">
+                  <el-button size="mini" type="primary" @click="upOrDown('down', currentActiveShape)">
+                    下移一层
+                  </el-button>
+                </el-col>
+              </el-row>
+            </template>
             <el-row
               v-if="
                 currentActiveShape &&
@@ -236,6 +248,9 @@ export default {
     },
   },
   methods: {
+    upOrDown(type, currentActiveShape) {
+      this.$emit("upOrDown", type, currentActiveShape)
+    },
     showBackgroundSetting(currentActiveShape) {
       if (currentActiveShape) {
         if (["textEditor", "valueLabel", "linkButton"].includes(currentActiveShape.attrs.nodetype)) {
