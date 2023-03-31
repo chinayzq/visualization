@@ -116,6 +116,7 @@ export default {
   mixins: [konvaMixins],
   data() {
     return {
+      recallStep: 10,
       recallList: [],
       freshInterval: null,
       intervalInstance: null,
@@ -952,6 +953,10 @@ export default {
               console.log("没有复制的节点")
             }
           }
+          // 撤销
+          if (e.ctrlKey && e.keyCode == 90) {
+            this.recallHandler()
+          }
         })
       // 改变窗口大小重新初始化画布和事件
       window.onresize = () => {
@@ -1212,6 +1217,7 @@ export default {
           }
           break
       }
+      this.tr.nodes([])
     },
     // 记录动作
     recallListHandler(type, nodeId, node, dragstart) {
@@ -1236,7 +1242,7 @@ export default {
           })
           break
       }
-      if (this.recallList.length > 5) {
+      if (this.recallList.length > this.recallStep) {
         this.recallList.shift()
       }
       console.log("this.recallList", this.recallList)
