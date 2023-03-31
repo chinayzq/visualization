@@ -1289,12 +1289,18 @@ export default {
                 image: imageObj,
                 icon: currentItem.icon,
                 draggable: true,
-                id: this.GenNonDuplicateID(),
+                id: currentDrogNode.id,
                 index: 1,
                 rotation: 0,
                 backgroundImage: "",
                 statusList: currentItem.detail.statusList,
                 nodetype: "businessNode",
+              })
+              Image.on("dragstart", () => {
+                this.dragStartHandler(currentDrogNode.id, {
+                  x: Image.x(),
+                  y: Image.y(),
+                })
               })
               this.layer.add(Image)
               Image.position(this.stage.getPointerPosition())
