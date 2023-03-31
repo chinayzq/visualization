@@ -295,12 +295,13 @@ export default {
     textEditorRender(item, callback, newId) {
       const { height, width, x, y, text, index, id, fontSize, fill } = item || {}
       const currentIndex = Number(index) || 1
+      const currentId = newId || id || this.GenNonDuplicateID()
       const textNode = new Konva.Text({
         nodetype: "textEditor",
         text,
         x,
         y,
-        id: newId || id || this.GenNonDuplicateID(),
+        id: currentId,
         index: currentIndex,
         rotation: 0,
         draggable: true,
@@ -308,6 +309,12 @@ export default {
         fontSize: fontSize || 12,
         height: Number(height),
         width: Number(width),
+      })
+      textNode.on("dragstart", () => {
+        this.dragStartHandler(currentId, {
+          x: textNode.x(),
+          y: textNode.y(),
+        })
       })
       this.layer.add(textNode)
       if (!x && !y) {
@@ -361,6 +368,12 @@ export default {
           rotation: 0,
           backgroundImage: "",
           nodetype: "backgroundImage",
+        })
+        textNode.on("dragstart", () => {
+          this.dragStartHandler(currentId, {
+            x: textNode.x(),
+            y: textNode.y(),
+          })
         })
         textNode.on("dragmove transform", () => {
           Image.setAttrs({
@@ -536,6 +549,12 @@ export default {
         x,
         y,
       })
+      Image.on("dragstart", () => {
+        this.dragStartHandler(currentId, {
+          x: Image.x(),
+          y: Image.y(),
+        })
+      })
       this.layer.add(Image)
       if (!x && !y) {
         Image.position(this.stage.getPointerPosition())
@@ -606,6 +625,12 @@ export default {
                 statusList,
                 sensorId: newId ? "" : sensorId,
                 icon,
+              })
+              Image.on("dragstart", () => {
+                this.dragStartHandler(currentId, {
+                  x: Image.x(),
+                  y: Image.y(),
+                })
               })
               // 设置背景图
               const backImageObj = new window.Image()
