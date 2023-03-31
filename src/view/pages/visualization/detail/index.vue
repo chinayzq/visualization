@@ -1378,6 +1378,7 @@ export default {
 .visualization_detail_comp {
   position: relative;
   height: 100vh;
+  overflow: hidden;
   .preview_bar {
     height: 50px;
     line-height: 50px;
