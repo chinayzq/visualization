@@ -22,6 +22,17 @@
         <i class="el-icon-view"></i>
         <span>预览</span>
       </div>
+      <div
+        class="top_menu_item"
+        :style="{
+          cursor: recallList.length ? 'pointer' : 'default',
+          color: recallList.length ? '#ffffff' : '#cccccc',
+        }"
+        @click="$emit('graphEvent', 'recall')"
+      >
+        <i class="el-icon-back"></i>
+        <span>撤销</span>
+      </div>
       <div class="top_menu_item">
         <span>{{ Math.floor(scale * 100) + "%" }}</span>
       </div>
@@ -35,20 +46,26 @@ export default {
     scale: {
       required: true,
       default() {
-        return 1;
+        return 1
+      },
+    },
+    recallList: {
+      type: Array,
+      default() {
+        return []
       },
     },
   },
   methods: {
     zoomHandler(type) {
-      this.$emit("graphEvent", type);
+      this.$emit("graphEvent", type)
     },
     clearChart() {
-      this.$emit("graphEvent", "clear");
+      this.$emit("graphEvent", "clear")
     },
     goPreview() {},
   },
-};
+}
 </script>
 
 <style lang="less" scoped>

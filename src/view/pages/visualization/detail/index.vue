@@ -1,6 +1,6 @@
 <template>
   <div class="visualization_detail_comp">
-    <topBar v-show="previewFlag === 'edit'" :scale="scale" @graphEvent="graphEvent" />
+    <topBar v-show="previewFlag === 'edit'" :recallList="recallList" :scale="scale" @graphEvent="graphEvent" />
     <div v-show="previewFlag === 'view'" class="preview_bar">
       <div>预览</div>
       <div @click="previewFlag = 'edit'" class="close_icon">
@@ -116,6 +116,7 @@ export default {
   mixins: [konvaMixins],
   data() {
     return {
+      recallList: [],
       freshInterval: null,
       intervalInstance: null,
       freshStep: 5 * 1000,
@@ -439,6 +440,12 @@ export default {
           backgroundImage: "",
           nodetype: "backgroundImage",
         })
+        textNode.on("dragstart", () => {
+          this.dragStartHandler(currentId, {
+            x: textNode.x(),
+            y: textNode.y(),
+          })
+        })
         textNode.on("dragmove transform", () => {
           Image.setAttrs({
             x: textNode.x(),
@@ -524,7 +531,7 @@ export default {
         id: currentId,
         index: currentIndex,
         rotation,
-        sensorId: newId ? '' : sensorId,
+        sensorId: newId ? "" : sensorId,
         backgroundImage: "",
         x,
         y,
@@ -547,8 +554,8 @@ export default {
           break
         case "businessNode":
           if (icon && icon.includes("data:image/gif")) {
-            node.attrs['sensorId'] = sensorId
-            return 
+            node.attrs["sensorId"] = sensorId
+            return
           }
           const imageObj = new window.Image()
           imageObj.src = icon
@@ -578,6 +585,7 @@ export default {
               return
             }
             // 初始化image对象
+            const currentId = newId || attrs.id || this.GenNonDuplicateID()
             const imageObj = new window.Image()
             imageObj.src = icon
             imageObj.onload = () => {
@@ -588,6 +596,7 @@ export default {
                 radius: 50,
                 image: imageObj,
                 icon: icon,
+                id: currentId,
                 top: x,
                 left: y,
                 draggable: true,
@@ -840,6 +849,9 @@ export default {
           break
         case "goPreview":
           this.previewFlag = "view"
+          break
+        case "recall":
+          this.recallHandler()
           break
       }
     },
@@ -1143,6 +1155,67 @@ export default {
         shape.scaleY(1)
       })
     },
+    dragStartHandler(nodeId, dragstart) {
+      this.recallListHandler("drag", nodeId, null, dragstart)
+    },
+    // 撤销执行方法
+    recallHandler() {
+      const lastItem = this.recallList.pop()
+      if (!lastItem) return
+      const { type, nodeId, node, dragstart } = lastItem
+      switch (type) {
+        case "drop":
+          const dropNode = this.findNodeById(nodeId)
+          dropNode && dropNode.destroy()
+          const dropBackgroundNode = this.findNodeById(`${nodeId}_background`)
+          dropBackgroundNode && dropBackgroundNode.destroy()
+          break
+        case "delete":
+          this.displaySingleNode(node)
+          break
+        case "drag":
+          const Node = this.findNodeById(nodeId)
+          const BackgroundNode = this.findNodeById(`${nodeId}_background`)
+          const { x, y } = dragstart
+          if (Node) {
+            Node.x(x)
+            Node.y(y)
+          }
+          if (BackgroundNode) {
+            BackgroundNode.x(x)
+            BackgroundNode.y(y)
+          }
+          break
+      }
+    },
+    // 记录动作
+    recallListHandler(type, nodeId, node, dragstart) {
+      switch (type) {
+        case "drop":
+          this.recallList.push({
+            type,
+            nodeId,
+          })
+          break
+        case "delete":
+          this.recallList.push({
+            type,
+            node,
+          })
+          break
+        case "drag":
+          this.recallList.push({
+            type,
+            nodeId,
+            dragstart,
+          })
+          break
+      }
+      if (this.recallList.length > 5) {
+        this.recallList.shift()
+      }
+      console.log("this.recallList", this.recallList)
+    },
     // drop 事件处理
     initDropHandler(Stage) {
       Stage.addEventListener("dragover", (e) => {
@@ -1158,6 +1231,9 @@ export default {
         // 获取当前拖动图片的icon
         const currentDrogNode = deepClone(this.currentDragItem)
         const { icon, nodetype, text, height, width, item } = currentDrogNode
+        currentDrogNode.id = this.GenNonDuplicateID()
+        // 记录新增节点操作
+        this.recallListHandler("drop", currentDrogNode.id)
         const currentItem = JSON.parse(item)
         if (nodetype === "textEditor") {
           // 纯展示文本框
@@ -1257,6 +1333,8 @@ export default {
           this.linkButtonAndLabelDelete(currentShape)
           break
       }
+      // 记录删除操作
+      this.recallListHandler("delete", null, currentShape)
       currentShape.destroy()
       this.tr.nodes([])
       this.layer.draw()
