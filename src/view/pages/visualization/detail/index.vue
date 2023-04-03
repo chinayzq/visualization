@@ -948,7 +948,9 @@ export default {
               // const { x, y } = this.stage.getPointerPosition()
               this.copyDatas.attrs.x += 20
               this.copyDatas.attrs.y += 20
-              this.displaySingleNode(this.copyDatas, this.GenNonDuplicateID())
+              const currentId = this.GenNonDuplicateID()
+              this.recallListHandler("drop", currentId)
+              this.displaySingleNode(this.copyDatas, currentId)
             } else {
               console.log("没有复制的节点")
             }
@@ -1166,7 +1168,7 @@ export default {
     },
     // 清除编辑area
     removeTextarea() {
-      if (!this.currentNode) return
+      if (!this.currentNode || !this.textarea) return
       this.currentNode.text(this.textarea.value)
       console.log("this.currentNode", this.currentNode)
       $(".editArea").remove()
@@ -1358,7 +1360,9 @@ export default {
         const { x, y } = this.stage.getPointerPosition()
         currentShape.attrs.x = x + 20
         currentShape.attrs.y = y + 20
-        this.displaySingleNode(currentShape, this.GenNonDuplicateID())
+        const currentId = this.GenNonDuplicateID()
+        this.recallListHandler("drop", currentId)
+        this.displaySingleNode(currentShape, currentId)
       })
     },
     nodeDeleteHandler(currentShape) {

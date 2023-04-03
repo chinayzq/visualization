@@ -330,16 +330,14 @@ export default {
       const _this = this
       console.log("this.currentActiveShape", this.currentActiveShape)
       if (this.currentActiveShape) {
-        let temp = deepClone(this.resultList)
-        temp.forEach((item) => {
-          if (item.id === _this.currentActiveShape) {
-            item.nodeStyle.backgroundImage = ""
-          }
-        })
-        this.chartData.nodes = deepClone(temp)
-        this.resultList = deepClone(temp)
+        this.currentActiveShape.attrs.backgroundImage = ""
+        this.currentActiveShape.fillPatternImage("")
       } else {
         this.basicBackground = ""
+        this.$emit("setBackground", {
+          type: "image",
+          datas: "",
+        })
       }
       this.formLabelAlign.backgroundImage = ""
     },
