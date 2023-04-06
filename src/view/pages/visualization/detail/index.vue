@@ -116,6 +116,7 @@ export default {
   mixins: [konvaMixins],
   data() {
     return {
+      hiddenTimer: null,
       recallStep: 10,
       recallList: [],
       freshInterval: null,
@@ -515,6 +516,38 @@ export default {
         this.layer.draw()
       }, 200)
     },
+    // startGifFresh() {
+    //   // if (this.freshInterval) return
+    //   // this.freshInterval = window.setInterval(() => {
+    //   //   this.layer.batchDraw()
+    //   // }, 200)
+    //   const anim = new Konva.Animation(() => {
+    //     this.layer.batchDraw()
+    //   }, this.layer)
+    //   anim.start()
+    // },
+    // GifFreshHidden() {
+    //   this.freshInterval = window.setInterval(() => {
+    //     this.freshAnimation()
+    //   }, 100)
+    // },
+    // startGifFresh() {
+    //   const animate = () => {
+    //     this.freshAnimation()
+    //     requestAnimationFrame(animate)
+    //   }
+    //   requestAnimationFrame(animate)
+    // },
+    // freshAnimation() {
+    //   this.layer.batchDraw()
+    // },
+    // handleVisibilityChange() {
+    //   if (document.hidden) {
+    //     this.freshInterval && window.clearInterval(this.freshInterval)
+    //   } else {
+    //     this.startGifFresh()
+    //   }
+    // },
     gifRender(item, callback, newId) {
       const { height, width, icon, x, y, rotation, sensorId, index } = item || {}
       console.log("sensorId", sensorId)
@@ -1338,6 +1371,7 @@ export default {
         // hide menu
         menuNode.style.display = "none"
       })
+      document.addEventListener("visibilitychange", this.handleVisibilityChange, false)
       // 删除
       document.getElementById("delete-button").addEventListener("click", () => {
         // 销毁节点 清空tr节点

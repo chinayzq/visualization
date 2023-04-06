@@ -10,6 +10,7 @@ export const konvaMixins = {
     },
     initLayer() {
       return new Konva.Layer()
+      // return new Konva.FastLayer()
     },
     addLayerToStage(stage, layer) {
       stage.add(layer)

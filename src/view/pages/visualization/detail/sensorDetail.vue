@@ -21,12 +21,15 @@
       <div class="common-header">点位详情</div>
       <el-row :gutter="48">
         <el-col class="single-prop" :span="12" v-for="(item, index) in detailDatas.list" :key="index">
-          <div class="label-line">{{ item.name }}：</div>
-          <div class="value-line">
-            {{ item.value }}
-            <span class="unit-span" v-show="item.unit && item.unit !== '-'">
-              {{ item.unit }}
-            </span>
+          <!-- 如果value为空，则不显示这个属性 -->
+          <div v-if="!item.value && item.value !== 0">
+            <div class="label-line">{{ item.name }}：</div>
+            <div class="value-line">
+              {{ item.value }}
+              <span class="unit-span" v-show="item.unit && item.unit !== '-'">
+                {{ item.unit }}
+              </span>
+            </div>
           </div>
         </el-col>
       </el-row>
@@ -85,7 +88,7 @@ export default {
       // 当前时间YYYY!MM!dd HH&mm + 公钥
       const secretPublucKey = this.publicKeyGenertion()
       const secretKey = encrypt2RSA(secretPublucKey, currentSecretKey)
-      console.log('secretKey2',secretKey)
+      console.log("secretKey2", secretKey)
       getSensorDetail(
         {
           secretKey,
