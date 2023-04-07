@@ -772,6 +772,7 @@ export default {
         const currentNode = this.findNodeBySensorId(sensorId, "businessNode")
         if (!currentNode) return
         const { statusList } = currentNode.attrs
+        if (!statusList) return
         currentNode.attrs.icon = statusList[tsStateV0.id]
         this.changeSingleNode(currentNode)
       })

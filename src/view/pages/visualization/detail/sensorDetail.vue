@@ -20,16 +20,47 @@
     <div class="props-container card-container">
       <div class="common-header">点位详情</div>
       <el-row :gutter="48">
-        <el-col class="single-prop" :span="12" v-for="(item, index) in detailDatas.list" :key="index">
+        <el-col :span="12" v-for="(item, index) in detailDatas.list" :key="index">
           <!-- 如果value为空，则不显示这个属性 -->
-          <div v-if="!item.value && item.value !== 0">
-            <div class="label-line">{{ item.name }}：</div>
-            <div class="value-line">
+          <!-- indexType： 1：直接展示值 2：input框 3：开关两个选项 4：自动、开、关三个选项 -->
+          <div class="single-prop" v-if="typeof item.value !== 'undefined'">
+            <span class="label-line">{{ item.name }}：</span>
+            <span class="value-line" v-if="item.indexType === 1">
               {{ item.value }}
               <span class="unit-span" v-show="item.unit && item.unit !== '-'">
                 {{ item.unit }}
               </span>
-            </div>
+            </span>
+            <span class="value-line" v-else-if="item.indexType === 2">
+              <el-input
+                size="mini"
+                style="width: 120px; display: inline-block"
+                v-model="item.value"
+                @blur="changeStatus(item, item.value)"
+              ></el-input>
+              <span class="unit-span" v-show="item.unit && item.unit !== '-'">
+                {{ item.unit }}
+              </span>
+            </span>
+            <span class="value-line" v-else-if="item.indexType === 3">
+              <el-button size="mini" :type="item.value === 1 ? 'primary' : ''" @click="changeStatus(item, 1)">
+                开
+              </el-button>
+              <el-button size="mini" :type="item.value === 0 ? 'primary' : ''" @click="changeStatus(item, 0)">
+                关
+              </el-button>
+            </span>
+            <span class="value-line" v-else-if="item.indexType === 4">
+              <el-button size="mini" :type="item.value === 2 ? 'primary' : ''" @click="changeStatus(item, 2)">
+                自动
+              </el-button>
+              <el-button size="mini" :type="item.value === 1 ? 'primary' : ''" @click="changeStatus(item, 1)">
+                开
+              </el-button>
+              <el-button size="mini" :type="item.value === 0 ? 'primary' : ''" @click="changeStatus(item, 0)">
+                关
+              </el-button>
+            </span>
           </div>
         </el-col>
       </el-row>
@@ -38,8 +69,9 @@
 </template>
 
 <script>
-import { getSensorDetail } from "@/api"
+import { getSensorDetail, updateValue } from "@/api"
 import { encrypt2RSA } from "@/utils/encrypt"
+import { deepClone } from "@/utils/utils.js"
 export default {
   name: "sensorDetailDialog",
   props: {
@@ -66,7 +98,11 @@ export default {
     return {
       loadingFlag: false,
       detailDatas: {
-        sensorName: "XXX传感器",
+        sensorName: "传感器名称",
+        list: [],
+      },
+      detailDatasResource: {
+        sensorName: "传感器名称",
         list: [],
       },
     }
@@ -80,6 +116,44 @@ export default {
     },
   },
   methods: {
+    valueNotChange(item, value) {
+      const { list } = this.detailDatasResource
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].index === item.index && value === list[i].value) {
+          return true
+        }
+      }
+      return false
+    },
+    updateResourceValue(index, value) {
+      const { list } = this.detailDatasResource
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].index === index && value === list[i].value) {
+          this.detailDatasResource.list[i].value = value
+        }
+      }
+    },
+    changeStatus(item, value) {
+      if (this.valueNotChange(item, value)) return
+      const currentSecretKey = process.env.VUE_APP_SECRET
+      // 当前时间YYYY!MM!dd HH&mm + 公钥
+      const secretPublucKey = this.publicKeyGenertion()
+      const secretKey = encrypt2RSA(secretPublucKey, currentSecretKey)
+      const params = {
+        index: item.index,
+        value,
+        sensorId: this.sensorId,
+      }
+      updateValue(secretKey, params, this.dynamicUrl).then((res) => {
+        if (res.code === 0) {
+          this.$message.success("点位更新成功！")
+          item.value = value
+          this.updateResourceValue(item.index, value)
+        } else {
+          this.$message.warning("点位更新失败：" + res.msg)
+        }
+      })
+    },
     // 通过ID获取传感器详情
     initSensorDetail(sensorId) {
       this.loadingFlag = true
@@ -98,6 +172,7 @@ export default {
       )
         .then((res) => {
           this.detailDatas = res.data
+          this.detailDatasResource = deepClone(res.data)
         })
         .finally(() => {
           this.loadingFlag = false
@@ -157,6 +232,16 @@ export default {
     }
   }
   .props-container {
+    .single-prop {
+      height: 30px;
+      line-height: 30px;
+      margin-bottom: 10px;
+      .label-line {
+        display: inline-block;
+        width: 100px;
+        text-align: right;
+      }
+    }
   }
 }
 </style>
