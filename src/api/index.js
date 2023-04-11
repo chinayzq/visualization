@@ -218,12 +218,12 @@ export function queryDeviceStateList(secretKey, params, dynamicUrl) {
  * 更新点位信息
  * @param params
  */
-export function updateValue(secretKey, params, dynamicUrl) {
+export function updateValue( params, dynamicUrl) {
   const url = dynamicUrl || "/newApi"
   return request({
-    url: `${url}/api/apiConfigure/updateValue?secretKey=${secretKey}`,
+    url: `${url}/api/apiConfigure/updateValue`,
     method: "post",
-    data: params,
+    params,
   })
 }
 

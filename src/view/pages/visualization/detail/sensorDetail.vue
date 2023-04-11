@@ -22,9 +22,13 @@
       <el-row :gutter="48">
         <el-col :span="12" v-for="(item, index) in detailDatas.list" :key="index">
           <!-- 如果value为空，则不显示这个属性 -->
-          <!-- indexType： 1：直接展示值 2：input框 3：开关两个选项 4：自动、开、关三个选项 -->
-          <div class="single-prop" v-if="typeof item.value !== 'undefined'">
+          <div class="single-prop" v-if="typeof item.value !== 'undefined'" >
             <span class="label-line">{{ item.name }}：</span>
+          <!-- indexType：
+            1：直接展示值
+            2：input框
+            3：开关两个选项
+            4：自动、开、关三个选项 -->
             <span class="value-line" v-if="item.indexType === 1">
               {{ item.value }}
               <span class="unit-span" v-show="item.unit && item.unit !== '-'">
@@ -32,34 +36,19 @@
               </span>
             </span>
             <span class="value-line" v-else-if="item.indexType === 2">
-              <el-input
-                size="mini"
-                style="width: 120px; display: inline-block"
-                v-model="item.value"
-                @blur="changeStatus(item, item.value)"
-              ></el-input>
+              <el-input size="mini" style="width: 120px;display: inline-block" v-model="item.value" @blur="changeStatus(item, item.value)"></el-input>
               <span class="unit-span" v-show="item.unit && item.unit !== '-'">
                 {{ item.unit }}
               </span>
             </span>
-            <span class="value-line" v-else-if="item.indexType === 3">
-              <el-button size="mini" :type="item.value === 1 ? 'primary' : ''" @click="changeStatus(item, 1)">
-                开
-              </el-button>
-              <el-button size="mini" :type="item.value === 0 ? 'primary' : ''" @click="changeStatus(item, 0)">
-                关
-              </el-button>
+            <span class="value-line" v-else-if="item.indexType ===3">
+              <el-button size="mini" :type="item.value === 1 ? 'primary' : ''" @click="changeStatus(item, 1)">开</el-button>
+              <el-button size="mini" :type="item.value === 0 ? 'primary' : ''" @click="changeStatus(item, 0)">关</el-button>
             </span>
             <span class="value-line" v-else-if="item.indexType === 4">
-              <el-button size="mini" :type="item.value === 2 ? 'primary' : ''" @click="changeStatus(item, 2)">
-                自动
-              </el-button>
-              <el-button size="mini" :type="item.value === 1 ? 'primary' : ''" @click="changeStatus(item, 1)">
-                开
-              </el-button>
-              <el-button size="mini" :type="item.value === 0 ? 'primary' : ''" @click="changeStatus(item, 0)">
-                关
-              </el-button>
+              <el-button size="mini" :type="item.value === 2 ? 'primary' : ''" @click="changeStatus(item, 2)">自动</el-button>
+              <el-button size="mini" :type="item.value === 1 ? 'primary' : ''" @click="changeStatus(item, 1)">开</el-button>
+              <el-button size="mini" :type="item.value === 0 ? 'primary' : ''" @click="changeStatus(item, 0)">关</el-button>
             </span>
           </div>
         </el-col>
@@ -116,8 +105,8 @@ export default {
     },
   },
   methods: {
-    valueNotChange(item, value) {
-      const { list } = this.detailDatasResource
+    valueNotChange(item, value){
+      const {list} = this.detailDatasResource
       for (let i = 0; i < list.length; i++) {
         if (list[i].index === item.index && value === list[i].value) {
           return true
@@ -125,15 +114,15 @@ export default {
       }
       return false
     },
-    updateResourceValue(index, value) {
+    updateResourceValue(index,value) {
       const { list } = this.detailDatasResource
       for (let i = 0; i < list.length; i++) {
-        if (list[i].index === index && value === list[i].value) {
+        if (list[i].index === index) {
           this.detailDatasResource.list[i].value = value
         }
       }
     },
-    changeStatus(item, value) {
+    changeStatus(item, value){
       if (this.valueNotChange(item, value)) return
       const currentSecretKey = process.env.VUE_APP_SECRET
       // 当前时间YYYY!MM!dd HH&mm + 公钥
@@ -143,14 +132,15 @@ export default {
         index: item.index,
         value,
         sensorId: this.sensorId,
+        secretKey
       }
-      updateValue(secretKey, params, this.dynamicUrl).then((res) => {
+      updateValue(params, this.dynamicUrl).then(res => {
         if (res.code === 0) {
-          this.$message.success("点位更新成功！")
+          this.$message.success('操作成功！')
           item.value = value
           this.updateResourceValue(item.index, value)
         } else {
-          this.$message.warning("点位更新失败：" + res.msg)
+          this.$message.warning('操作失败：' + res.msg )
         }
       })
     },
@@ -232,13 +222,13 @@ export default {
     }
   }
   .props-container {
-    .single-prop {
+    .single-prop{
       height: 30px;
       line-height: 30px;
       margin-bottom: 10px;
-      .label-line {
+      .label-line{
         display: inline-block;
-        width: 100px;
+        width: 140px;
         text-align: right;
       }
     }

@@ -14,6 +14,10 @@
       :style="{
         height: previewFlag === 'edit' ? `calc(100% - 50px)` : '100%',
       }"
+      v-loading="graphLoading"
+      element-loading-text="场景加载中..."
+      element-loading-spinner="el-icon-loading"
+      element-loading-background="rgba(0, 0, 0, 0.3)"
     >
       <div class="menu_container" v-show="previewFlag === 'edit'">
         <asideMenu @setCurrentDragItem="setCurrentDragItem" />
@@ -21,10 +25,6 @@
       <div
         class="stage_container"
         id="stage_container"
-        v-loading="graphLoading"
-        element-loading-text="场景加载中..."
-        element-loading-spinner="el-icon-loading"
-        element-loading-background="rgba(0, 0, 0, 0.3)"
       ></div>
       <div class="props_container" v-show="previewFlag === 'edit'">
         <detailProps
@@ -116,6 +116,8 @@ export default {
   mixins: [konvaMixins],
   data() {
     return {
+      animationId: null,
+      storeDatas: null,
       hiddenTimer: null,
       recallStep: 10,
       recallList: [],
@@ -181,6 +183,7 @@ export default {
   beforeDestroy() {
     this.intervalInstance && window.clearInterval(this.intervalInstance)
     this.freshInterval && window.clearInterval(this.freshInterval)
+    this.animationId && window.cancelAnimationFrame(this.animationId)
   },
   mounted() {
     /**
@@ -284,6 +287,7 @@ export default {
       const ImageNodes = TheLayer.children.filter((item) => item.className === "Image" || item.className === "Text")
       let displayList = []
       ImageNodes.forEach((item) => displayList.push(this.displaySingleNode(item)))
+      console.log('xxxx2')
       Promise.all(displayList)
         .then(() => {
           this.layer.draw()
@@ -293,6 +297,14 @@ export default {
           this.$message.warning("场景渲染失败！")
           this.graphLoading = false
         })
+        
+      window.cancelAnimationFrame(this.animationId)
+      this.animationId = null
+      this.storeDatas = this.dealRequestParams()
+      setTimeout(() => {
+        this.redrawGif()
+        this.graphLoading = false
+      }, 1000);
     },
     textEditorRender(item, callback, newId) {
       const { height, width, x, y, text, index, id, fontSize, fill } = item || {}
@@ -511,11 +523,43 @@ export default {
       return URL.createObjectURL(file)
     },
     startGifFresh() {
-      if (this.freshInterval) return
-      this.freshInterval = window.setInterval(() => {
+      if (this.animationId) return
+      const animate = () => {
         this.layer.draw()
-      }, 200)
+        this.animationId = requestAnimationFrame(animate)
+      }
+      animate()
     },
+    handleVisibilityChange() {
+      if (document.hidden) {
+        this.storeDatas = this.dealRequestParams()
+        // this.layer.destroyChildren()
+        window.cancelAnimationFrame(this.animationId)
+        this.animationId = null
+      } else {
+        this.redrawGif()
+      }
+    },
+    redrawGif(){
+      const { detail } = this.storeDatas || {}
+      if (!detail) return
+      const displayDatas = JSON.parse(JSON.parse(detail))
+      const TheLayer = displayDatas.children[0]
+      const GifNodes = TheLayer.children.filter(
+        (item) => item.attrs && item.attrs.icon && item.attrs.icon.includes("data:image/gif")
+      )
+      GifNodes.forEach((item) => {
+        const currentNode = this.findNodeById(item.attrs.id)
+        currentNode && currentNode.destroy()
+        this.gifRender(item.attrs)
+      })
+    },
+    // startGifFresh() {
+    //   if (this.freshInterval) return
+    //   this.freshInterval = window.setInterval(() => {
+    //     this.layer.draw()
+    //   }, 200)
+    // },
     // startGifFresh() {
     //   // if (this.freshInterval) return
     //   // this.freshInterval = window.setInterval(() => {
