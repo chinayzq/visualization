@@ -22,10 +22,7 @@
       <div class="menu_container" v-show="previewFlag === 'edit'">
         <asideMenu @setCurrentDragItem="setCurrentDragItem" />
       </div>
-      <div
-        class="stage_container"
-        id="stage_container"
-      ></div>
+      <div class="stage_container" id="stage_container"></div>
       <div class="props_container" v-show="previewFlag === 'edit'">
         <detailProps
           :currentActiveShape="currentActiveShape"
@@ -98,6 +95,8 @@ import SensorDetail from "./sensorDetail.vue"
 import { konvaMixins } from "@/mixins/konvaMixins.js"
 import { encrypt2RSA } from "@/utils/encrypt"
 import { deepClone } from "@/utils/utils.js"
+import lodash from "lodash"
+import "@/utils/gifler.js"
 // import Konva from "konva"
 import {
   getVisualizationDetail,
@@ -116,6 +115,7 @@ export default {
   mixins: [konvaMixins],
   data() {
     return {
+      animators: [],
       animationId: null,
       storeDatas: null,
       hiddenTimer: null,
@@ -287,7 +287,7 @@ export default {
       const ImageNodes = TheLayer.children.filter((item) => item.className === "Image" || item.className === "Text")
       let displayList = []
       ImageNodes.forEach((item) => displayList.push(this.displaySingleNode(item)))
-      console.log('xxxx2')
+      console.log("xxxx2")
       Promise.all(displayList)
         .then(() => {
           this.layer.draw()
@@ -297,14 +297,14 @@ export default {
           this.$message.warning("场景渲染失败！")
           this.graphLoading = false
         })
-        
-      window.cancelAnimationFrame(this.animationId)
-      this.animationId = null
-      this.storeDatas = this.dealRequestParams()
-      setTimeout(() => {
-        this.redrawGif()
-        this.graphLoading = false
-      }, 1000);
+      this.graphLoading = false
+      // window.cancelAnimationFrame(this.animationId)
+      // this.animationId = null
+      // this.storeDatas = this.dealRequestParams()
+      // setTimeout(() => {
+      //   this.redrawGif()
+      //   this.graphLoading = false
+      // }, 1000);
     },
     textEditorRender(item, callback, newId) {
       const { height, width, x, y, text, index, id, fontSize, fill } = item || {}
@@ -524,23 +524,49 @@ export default {
     },
     startGifFresh() {
       if (this.animationId) return
-      const animate = () => {
-        this.layer.draw()
-        this.animationId = requestAnimationFrame(animate)
+      // const animate = (currentTimeStamp) => {
+      //   this.layer.batchDraw()
+      //   this.animationId = requestAnimationFrame(animate())
+      // }
+
+      // animate()
+      const animate = (timestamp) => {
+        // 在这里进行动画更新及绘制操作
+
+        // 利用闭包保存上一次时间戳
+        let lastTimestamp = timestamp
+        return (currentTimestamp) => {
+          if (currentTimestamp - lastTimestamp >= 1000 / 30) {
+            // 30 FPS
+            // 更新动画状态并重新绘制图像
+            lastTimestamp = currentTimestamp
+            this.layer.batchDraw()
+          }
+          requestAnimationFrame(animate(lastTimestamp))
+        }
       }
-      animate()
+
+      // 启动动画
+      this.animationId = requestAnimationFrame(animate(0))
     },
     handleVisibilityChange() {
-      if (document.hidden) {
-        this.storeDatas = this.dealRequestParams()
-        // this.layer.destroyChildren()
-        window.cancelAnimationFrame(this.animationId)
-        this.animationId = null
-      } else {
-        this.redrawGif()
-      }
+      this.animators.forEach((animator) => {
+        if (document.hidden && animator.running()) {
+          animator.stop()
+        } else if (!document.hidden && !animator.running()) {
+          animator.start()
+        }
+      })
+      // if (document.hidden) {
+      //   this.storeDatas = this.dealRequestParams()
+      //   // this.layer.destroyChildren()
+      //   window.cancelAnimationFrame(this.animationId)
+      //   this.animationId = null
+      // } else {
+      //   this.redrawGif()
+      // }
     },
-    redrawGif(){
+    redrawGif() {
       const { detail } = this.storeDatas || {}
       if (!detail) return
       const displayDatas = JSON.parse(JSON.parse(detail))
@@ -609,7 +635,11 @@ export default {
       //   that.layer.draw()
       // }
       // gifler(icon).frames(canvas, onDrawFrame)
-      gifler(icon).animate(canvas)
+      gifler(icon)
+        .animate(canvas)
+        .then((animator) => {
+          this.animators.push(animator)
+        })
       this.startGifFresh()
       const Image = new Konva.Image({
         nodetype: "businessNode",
@@ -637,7 +667,7 @@ export default {
       if (!x && !y) {
         Image.position(this.stage.getPointerPosition())
       }
-      this.layer.draw()
+      // this.layer.draw()
     },
     changeSingleNode(node) {
       const { icon, x, y, backgroundImage, height, width, rotation, text, value, unit, nodetype, targetUrl, sensorId } =
@@ -900,10 +930,11 @@ export default {
       this.currentActiveProps = this.backgroundObj
       // 如果是详情模式，则居中画布
       if (this.$route.query.viewMode === "detail") {
-        this.backgroundTop = `${(960 - height.substr(0, height.length - 2)) / 2}px`
-        this.backgroundLeft = `${(1920 - width.substr(0, width.length - 2)) / 2}px`
-        $(".konvajs-content").css("top", this.backgroundTop)
-        $(".konvajs-content").css("left", this.backgroundLeft)
+        // this.backgroundTop = `${(960 - height.substr(0, height.length - 2)) / 2}px`
+        // this.backgroundLeft = `${(1920 - width.substr(0, width.length - 2)) / 2}px`
+        // $(".konvajs-content").css("top", this.backgroundTop)
+        // $(".konvajs-content").css("left", this.backgroundLeft)
+        $(".konvajs-content").css("margin", "0 auto")
       }
     },
     // 设置画布背景图及宽、高
@@ -1016,7 +1047,7 @@ export default {
           if (e.ctrlKey && e.keyCode == 67) {
             if (this.currentActiveShape) {
               this.$message.success("已复制节点！")
-              this.copyDatas = this.currentActiveShape
+              this.copyDatas = lodash.cloneDeep(this.currentActiveShape)
             } else {
               console.log("没有激活节点")
             }

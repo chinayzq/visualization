@@ -18,7 +18,11 @@
       <finalTable ref="finalTableRef" :datas="dataset" @tableEventHandler="tableEventHandler"></finalTable>
     </div>
 
-    <el-dialog :visible="dynamic.dialogShow" width="600px" append-to-body :title="dynamic.title">
+    <el-dialog :visible="dynamic.dialogShow" width="600px" append-to-body :title="dynamic.title" :before-close="
+        () => {
+          dynamic.dialogShow = false
+        }
+      ">
       <el-form :model="dynamic.form" ref="dynamicForm" :rules="dynamicRules" label-width="100px">
         <el-form-item label="动态Url" prop="name">
           <el-select style="width: 100%" v-model="dynamic.form.dynamicUrl" placeholder="请选择动态Url" clearable>
