@@ -139,6 +139,16 @@
               </el-col>
             </el-row>
           </div>
+          <el-row :gutter="24" v-show="!currentActiveShape">
+            <el-col :span="24">
+              <el-form-item label="背景颜色">
+                <el-color-picker
+                  @change="backgroundColorChange"
+                  v-model="formLabelAlign.backgroundColor"
+                ></el-color-picker>
+              </el-form-item>
+            </el-col>
+          </el-row>
           <el-row :gutter="24" v-if="showBackgroundSetting(currentActiveShape)">
             <el-col :span="24">
               <el-form-item label="背景图片">
@@ -230,6 +240,7 @@ export default {
         sensorId: "",
         sensorPoint: "",
         targetUrl: "",
+        backgroundColor: "#F2F2F2",
       },
     }
   },
@@ -248,6 +259,10 @@ export default {
     },
   },
   methods: {
+    updatePosition() {
+      this.formLabelAlign.x = this.currentActiveShape.x()
+      this.formLabelAlign.y = this.currentActiveShape.y()
+    },
     upOrDown(type, currentActiveShape) {
       this.$emit("upOrDown", type, currentActiveShape)
     },
@@ -270,6 +285,12 @@ export default {
         // 给背景设置
         this.$emit("setBackground", { type, datas: value })
       }
+    },
+    backgroundColorChange(color) {
+      this.$emit("setBackground", {
+        type: "color",
+        datas: color,
+      })
     },
     imageUploadHandler(data) {
       this.getBase64(data.file).then((resBase64) => {

@@ -193,6 +193,7 @@ export default {
     flex-wrap: wrap;
     flex-direction: row;
     align-content: flex-start;
+    overflow: auto;
     .menu_item {
       height: 60px;
       width: 60px;

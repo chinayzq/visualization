@@ -265,6 +265,7 @@ export default {
       })
     },
     bindUrlHandler(datas) {
+      console.log(datas)
       const currentBasicDats = JSON.parse(datas.basicData)
       this.dynamic.editRow = deepClone(datas)
       this.dynamic.form.dynamicUrl = currentBasicDats.dynamicUrl

@@ -25,6 +25,7 @@
       <div class="stage_container" id="stage_container"></div>
       <div class="props_container" v-show="previewFlag === 'edit'">
         <detailProps
+          ref="detailComponent"
           :currentActiveShape="currentActiveShape"
           :currentActiveProps="currentActiveProps"
           @changeSingleNode="changeSingleNode"
@@ -155,6 +156,7 @@ export default {
       // 当前拖放的item
       currentDragItem: {},
       backgroundObj: {
+        backgroundColor: "#f2f2f2",
         backgroundImage: null,
         width: 0,
         height: 0,
@@ -262,12 +264,13 @@ export default {
     // 回显场景数据
     displayHandler(basicData, displayDatas) {
       // 处理背景图，尺寸
-      const { backgroundImage, backgroundHeight, backgroundWidth } = JSON.parse(basicData) || {}
+      const { backgroundImage, backgroundHeight, backgroundWidth, backgroundColor } = JSON.parse(basicData) || {}
       // 编辑时需要获取到画布宽、高以后再初始化，不然画布可能显示不完全
       this.initKonvaAndEvent(backgroundWidth, backgroundHeight)
       this.setBackground({ type: "image", datas: backgroundImage })
       this.setBackground({ type: "width", datas: backgroundWidth })
       this.setBackground({ type: "height", datas: backgroundHeight })
+      this.setBackground({ type: "color", datas: backgroundColor })
       // 回显自定义节点
       // 只有一个图层，所以取children[0]
       const TheLayer = displayDatas.children[0]
@@ -329,7 +332,7 @@ export default {
         callback()
       }
     },
-    valueLabelRender(item, callback, newId) {
+    valueLabelRender(item, newId, callback) {
       const { height, width, nodetype, x, y, sensorId, sensorPoint, value, unit, icon, backgroundIcon } = item || {}
       const currentId = newId || item.id || this.GenNonDuplicateID()
       const textNode = new Konva.Text({
@@ -413,7 +416,7 @@ export default {
       backgroundNode.destroy()
       this.layer.draw()
     },
-    linkButtonRender(item, callback, newId) {
+    linkButtonRender(item, newId, callback) {
       const { height, width, nodetype, x, y, text, icon, backgroundIcon, targetUrl } = item || {}
       const currentId = newId || item.id || this.GenNonDuplicateID()
       const textNode = new Konva.Text({
@@ -920,6 +923,7 @@ export default {
         backgroundImage: this.backgroundObj.backgroundImage,
         backgroundHeight: this.backgroundObj.height,
         backgroundWidth: this.backgroundObj.width,
+        backgroundColor: this.backgroundObj.backgroundColor,
       })
       return params
     },
@@ -961,6 +965,10 @@ export default {
           this.stage.height(datas)
           // 初始化drop事件
           this.initDropHandler(Stage)
+          break
+        case "color":
+          targetDom.style.backgroundColor = datas
+          this.backgroundObj.backgroundColor = datas
           break
       }
     },
@@ -1076,6 +1084,11 @@ export default {
           if (e.ctrlKey && e.keyCode == 90) {
             this.recallHandler()
           }
+          // 上下左右
+          // 38、40、37、39
+          if ([38, 40, 37, 39].includes(e.keyCode) && this.currentActiveShape) {
+            this.moveHandler(e.keyCode)
+          }
         })
       // 改变窗口大小重新初始化画布和事件
       window.onresize = () => {
@@ -1100,6 +1113,23 @@ export default {
         this.initMouseWheel()
         this.initDBClickHandler(this.stage)
       }
+    },
+    moveHandler(keyCode) {
+      switch (keyCode) {
+        case 38:
+          this.currentActiveShape["y"](this.currentActiveShape.y() - 1)
+          break
+        case 40:
+          this.currentActiveShape["y"](this.currentActiveShape.y() + 1)
+          break
+        case 37:
+          this.currentActiveShape["x"](this.currentActiveShape.x() - 1)
+          break
+        case 39:
+          this.currentActiveShape["x"](this.currentActiveShape.x() + 1)
+          break
+      }
+      this.$refs.detailComponent.updatePosition()
     },
     // mousewheel 事件处理
     initMouseWheel() {
@@ -1540,6 +1570,9 @@ export default {
   position: relative;
   height: 100vh;
   overflow: hidden;
+  ::v-deep .konvajs-content {
+    background-color: #f2f2f2;
+  }
   .preview_bar {
     height: 50px;
     line-height: 50px;
