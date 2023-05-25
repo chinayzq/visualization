@@ -116,6 +116,7 @@ export default {
   mixins: [konvaMixins],
   data() {
     return {
+      dragFlag: false,
       animators: [],
       animationId: null,
       storeDatas: null,
@@ -1049,6 +1050,7 @@ export default {
       $(document)
         .off("keydown")
         .on("keydown", (e) => {
+          console.log("e", e.keyCode)
           if (e.keyCode == 27) {
             e.preventDefault()
             this.previewFlag = "edit"
@@ -1088,6 +1090,20 @@ export default {
           // 38、40、37、39
           if ([38, 40, 37, 39].includes(e.keyCode) && this.currentActiveShape) {
             this.moveHandler(e.keyCode)
+          }
+          // 空格
+          if (e.keyCode == 32) {
+            e.preventDefault()
+            this.dragFlag = true
+            $(".konvajs-content").css("cursor", "grabbing")
+          }
+        })
+      $(document)
+        .off("keyup")
+        .on("keyup", (e) => {
+          if (e.keyCode == 32) {
+            this.dragFlag = false
+            $(".konvajs-content").css("cursor", "default")
           }
         })
       // 改变窗口大小重新初始化画布和事件
@@ -1166,6 +1182,32 @@ export default {
     initClickHandler(Stage) {
       Stage.on("mousedown", (e) => {
         console.log("当前选择", e.target)
+        // this.dragFlag为ture，则表示按住了空格，开启画布拖动模式
+        if (this.dragFlag) {
+          // 改变鼠标样式，绑定mousemove事件，拖拽画布
+          $(".konvajs-content").css("cursor", "grabbing")
+          let startPoint = {
+            x: e.evt.pageX,
+            y: e.evt.pageY,
+          }
+          const startPosition = {
+            x: this.backgroundTop,
+            y: this.backgroundLeft,
+          }
+          Stage.on("mousemove", (event) => {
+            const xDiff = startPosition.x + event.evt.pageY - startPoint.y
+            const yDiff = startPosition.y + event.evt.pageX - startPoint.x
+            this.backgroundTop = xDiff
+            this.backgroundLeft = yDiff
+            console.log("xDiff", xDiff)
+            $(".konvajs-content").css("top", xDiff)
+            $(".konvajs-content").css("left", yDiff)
+          })
+          this.tr.nodes([])
+          this.removeTextarea()
+          this.layer.draw()
+          return
+        }
         // 如果点击的是transform的选择点，return，否则会死循环！
         if (e.target.attrs.name && e.target.attrs.name.includes("_anchor")) {
           return
@@ -1187,25 +1229,6 @@ export default {
             console.log("点击空白区域")
             this.currentActiveShape = null
             this.currentActiveProps = this.backgroundObj
-            // 改变鼠标样式，绑定mousemove事件，拖拽画布
-            $(".konvajs-content").css("cursor", "grabbing")
-            let startPoint = {
-              x: e.evt.pageX,
-              y: e.evt.pageY,
-            }
-            const startPosition = {
-              x: this.backgroundTop,
-              y: this.backgroundLeft,
-            }
-            Stage.on("mousemove", (event) => {
-              const xDiff = startPosition.x + event.evt.pageY - startPoint.y
-              const yDiff = startPosition.y + event.evt.pageX - startPoint.x
-              this.backgroundTop = xDiff
-              this.backgroundLeft = yDiff
-              console.log("xDiff", xDiff)
-              $(".konvajs-content").css("top", xDiff)
-              $(".konvajs-content").css("left", yDiff)
-            })
             this.tr.nodes([])
             this.removeTextarea()
             this.layer.draw()
