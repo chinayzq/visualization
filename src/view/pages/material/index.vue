@@ -15,7 +15,12 @@
     </div>
 
     <div>
-      <finalTable ref="finalTableRef" :datas="dataset" @tableEventHandler="tableEventHandler" />
+      <finalTable ref="finalTableRef" :datas="dataset" @tableEventHandler="tableEventHandler">
+        <template v-slot:defaultImageSlot="row">
+          <img v-if="row.datas.defaultImage" :src="row.datas.defaultImage" alt="" />
+          <span v-else>暂无图片</span>
+        </template>
+      </finalTable>
     </div>
 
     <el-dialog
@@ -85,6 +90,11 @@ export default {
             width: "",
           },
           {
+            prop: "defaultImage",
+            label: "素材图片",
+            width: "",
+          },
+          {
             prop: "catelog",
             label: "素材分类",
             width: "",
@@ -139,6 +149,10 @@ export default {
         },
         // 表格内容配置
         detailConfig: {
+          defaultImage: {
+            type: "slot",
+            slotName: "defaultImageSlot",
+          },
           catelog: {
             type: "enumerationColumn",
             emuList: {
@@ -238,6 +252,12 @@ export default {
               item.status = item.status ? "ENABLE" : "DIASABLE"
             })
             this.dataset.pageVO.total = res.data.total
+            try {
+              resultList.forEach((item) => {
+                const detail = JSON.parse(item.detail)
+                item.defaultImage = detail.statusList[detail.default]
+              })
+            } catch (error) {}
             this.dataset.tableData = resultList
           } else {
             this.dataset.pageVO.total = 0

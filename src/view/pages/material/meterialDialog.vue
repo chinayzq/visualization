@@ -38,7 +38,7 @@
                   <el-input
                     :ref="'nameInput_' + index"
                     class="name-input"
-                    placeholder="状态名称"
+                    placeholder="状态编码"
                     v-model="item.nameBak"
                     @keyup.enter.native="lineSubmit(index)"
                   ></el-input>
@@ -46,7 +46,7 @@
                     :disabled="item.nameBak !== ''"
                     class="item"
                     effect="dark"
-                    content="请输入状态名称"
+                    content="请输入状态编码"
                     placement="top-start"
                   >
                     <el-button size="mini" icon="el-icon-check" @click="lineSubmit(index)"></el-button>
@@ -55,7 +55,7 @@
                     :disabled="item.name !== ''"
                     class="item"
                     effect="dark"
-                    content="请保存状态名称"
+                    content="请保存状态编码"
                     placement="top-start"
                   >
                     <el-button size="mini" icon="el-icon-close" @click="lineCancel(index)"></el-button>

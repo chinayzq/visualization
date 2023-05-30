@@ -28,6 +28,8 @@
           ref="detailComponent"
           :currentActiveShape="currentActiveShape"
           :currentActiveProps="currentActiveProps"
+          :currentActiveList="currentActiveList"
+          @positionHandler="positionHandler"
           @changeSingleNode="changeSingleNode"
           @setBackground="setBackground"
           @upOrDown="upOrDownHandler"
@@ -143,6 +145,7 @@ export default {
         name: "",
         description: "",
         datas: null,
+        dynamicUrl: "",
       },
       currentActiveProps: {},
       currentActiveShape: null,
@@ -171,6 +174,7 @@ export default {
           },
         ],
       },
+      currentActiveList: [],
     }
   },
   watch: {
@@ -200,6 +204,63 @@ export default {
     this.initData()
   },
   methods: {
+    positionHandler(type) {
+      const { minX, minY, maxX, maxY } = this.calcPosition()
+      this.currentActiveList.forEach((item) => {
+        const { nodetype, id } = item.attrs
+        switch (type) {
+          case "up":
+            item.y(minY)
+            if (["valueLabel", "linkButton"].includes(nodetype)) {
+              const backgroundNode = this.findNodeById(`${id}_background`)
+              backgroundNode.y(minY)
+            }
+            break
+          case "down":
+            item.y(maxY)
+            if (["valueLabel", "linkButton"].includes(nodetype)) {
+              const backgroundNode = this.findNodeById(`${id}_background`)
+              backgroundNode.y(maxY)
+            }
+            break
+          case "left":
+            item.x(minX)
+            if (["valueLabel", "linkButton"].includes(nodetype)) {
+              const backgroundNode = this.findNodeById(`${id}_background`)
+              backgroundNode.x(minX)
+            }
+            break
+          case "right":
+            item.x(maxX)
+            if (["valueLabel", "linkButton"].includes(nodetype)) {
+              const backgroundNode = this.findNodeById(`${id}_background`)
+              backgroundNode.x(maxX)
+            }
+            break
+        }
+      })
+    },
+    calcPosition() {
+      let minX
+      let maxX
+      let minY
+      let maxY
+      this.currentActiveList.forEach((item) => {
+        let { x, y, width, height } = item.getClientRect()
+        if (minX == undefined) {
+          minX = x
+          maxX = x
+          minY = y
+          maxY = y
+        } else {
+          minX = Math.min(x, minX)
+          maxX = Math.max(x, maxX)
+          minY = Math.min(y, minY)
+          maxY = Math.max(y, maxY)
+        }
+      })
+      return { minX, minY, maxX, maxY }
+    },
     upOrDownHandler(type, currentShape) {
       const { nodetype, id } = currentShape.attrs
       if (type === "up") {
@@ -302,7 +363,7 @@ export default {
       //   this.graphLoading = false
       // }, 1000);
     },
-    textEditorRender(item, callback, newId) {
+    textEditorRender(item, newId) {
       const { height, width, x, y, text, id, fontSize, fill } = item || {}
       const currentId = newId || id || this.GenNonDuplicateID()
       const textNode = new Konva.Text({
@@ -329,9 +390,6 @@ export default {
         textNode.position(this.stage.getPointerPosition())
       }
       this.layer.draw()
-      if (callback) {
-        callback()
-      }
     },
     valueLabelRender(item, newId, callback) {
       const { height, width, nodetype, x, y, sensorId, sensorPoint, value, unit, icon, backgroundIcon } = item || {}
@@ -468,6 +526,7 @@ export default {
             height: textNode.height(),
             scaleX: textNode.scaleX(),
             scaleY: textNode.scaleY(),
+            rotation: textNode.rotation(),
           })
         })
         Image.on("dragmove transform", () => {
@@ -605,7 +664,7 @@ export default {
     //     this.startGifFresh()
     //   }
     // },
-    gifRender(item, callback, newId) {
+    gifRender(item, newId) {
       const { height, width, icon, x, y, rotation, sensorId, statusList } = item || {}
       console.log("sensorId", sensorId)
       const currentId = newId || item.id || this.GenNonDuplicateID()
@@ -653,7 +712,7 @@ export default {
       if (!x && !y) {
         Image.position(this.stage.getPointerPosition())
       }
-      // this.layer.draw()
+      this.layer.draw()
     },
     changeSingleNode(node) {
       const {
@@ -925,6 +984,7 @@ export default {
         backgroundHeight: this.backgroundObj.height,
         backgroundWidth: this.backgroundObj.width,
         backgroundColor: this.backgroundObj.backgroundColor,
+        dynamicUrl: this.saveDialog.dynamicUrl || "",
       })
       return params
     },
@@ -1167,7 +1227,8 @@ export default {
       const { nodetype, targetUrl, sensorId, icon } = node.attrs || {}
       switch (nodetype) {
         case "linkButton":
-          window.open(targetUrl, "_blank")
+          debugger
+          window.open(targetUrl, "_self")
           break
         case "businessNode":
           if (sensorId) {
@@ -1182,6 +1243,23 @@ export default {
     initClickHandler(Stage) {
       Stage.on("mousedown", (e) => {
         console.log("当前选择", e.target)
+        // 如果点击的是transform的选择点，return，否则会死循环！
+        if (e.target.attrs.name && e.target.attrs.name.includes("_anchor")) {
+          return
+        }
+        // 如果按住ctrl，多选
+        if (e.evt.ctrlKey && e.target !== this.stage) {
+          const existIndex = this.currentActiveList.findIndex((item) => {
+            return item.attrs.id === e.target.attrs.id
+          })
+          if (existIndex === -1) {
+            this.currentActiveList.push(e.target)
+          } else {
+            this.currentActiveList.splice(existIndex, 1)
+          }
+          this.tr.nodes(this.currentActiveList)
+          return
+        }
         // this.dragFlag为ture，则表示按住了空格，开启画布拖动模式
         if (this.dragFlag) {
           // 改变鼠标样式，绑定mousemove事件，拖拽画布
@@ -1208,10 +1286,6 @@ export default {
           this.layer.draw()
           return
         }
-        // 如果点击的是transform的选择点，return，否则会死循环！
-        if (e.target.attrs.name && e.target.attrs.name.includes("_anchor")) {
-          return
-        }
         // 设置当前激活节点
         this.currentActiveShape = e.target
         // 设置当前节点属性
@@ -1223,6 +1297,7 @@ export default {
           // 处理点击事件
           this.detailClickHandler(this.currentActiveShape)
         } else {
+          this.currentActiveList = []
           const ClickBlank = e.target === this.stage
           // 如果点击空白区域
           if (ClickBlank) {
@@ -1236,7 +1311,7 @@ export default {
           }
           // 点击到了具体图形，则激活该元素的transformer
           this.tr.nodes([e.target])
-          this.initTransformHandler(e.target)
+          this.initTransformHandler([e.target])
           // 获取当前节点的index，给tr设置index
           // this.tr.zIndex(e.target.attrs.index)
           this.layer.draw()
@@ -1350,11 +1425,13 @@ export default {
     },
     // transform 事件 - 解决在变形时只改变scalex和scaley，而width和height不变的问题
     initTransformHandler(shape) {
-      shape.on("transform", () => {
-        shape.width(Math.max(5, shape.width() * shape.scaleX()))
-        shape.height(Math.max(5, shape.height() * shape.scaleY()))
-        shape.scaleX(1)
-        shape.scaleY(1)
+      shape.forEach((item) => {
+        item.on("transform", () => {
+          item.width(Math.max(5, item.width() * item.scaleX()))
+          item.height(Math.max(5, item.height() * item.scaleY()))
+          item.scaleX(1)
+          item.scaleY(1)
+        })
       })
     },
     dragStartHandler(nodeId, dragstart) {
@@ -1427,6 +1504,8 @@ export default {
       this.stage.setPointersPositions(e)
       // 获取当前拖动图片的icon
       const currentDrogNode = deepClone(this.currentDragItem)
+      currentDrogNode.height = Number(currentDrogNode.height)
+      currentDrogNode.width = Number(currentDrogNode.width)
       const { icon, nodetype, text, height, width, item } = currentDrogNode
       currentDrogNode.id = this.GenNonDuplicateID()
       // 记录新增节点操作

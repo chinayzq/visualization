@@ -3,167 +3,187 @@
     <el-tabs v-model="activeName">
       <el-tab-pane label="外观" name="props">
         <el-form label-position="top" label-width="100%" :model="formLabelAlign">
-          <div v-show="currentActiveShape">
+          <template v-if="currentActiveList.length">
             <el-row :gutter="24">
-              <el-col :span="12">
-                <el-form-item label="X(px)">
-                  <el-input-number
-                    v-model="formLabelAlign.x"
-                    @input="formItemChange('x', formLabelAlign.x)"
-                    controls-position="right"
-                    size="small"
-                  ></el-input-number>
-                </el-form-item>
+              <el-col :span="12" style="margin-bottom: 10px">
+                <el-button type="primary" @click="positionHandler('up')">上对齐</el-button>
               </el-col>
-              <el-col :span="12">
-                <el-form-item label="Y(px)">
-                  <el-input-number
-                    v-model="formLabelAlign.y"
-                    @input="formItemChange('y', formLabelAlign.y)"
-                    controls-position="right"
-                    size="small"
-                  ></el-input-number>
-                </el-form-item>
+              <el-col :span="12" style="margin-bottom: 10px">
+                <el-button type="primary" @click="positionHandler('down')">下对齐</el-button>
               </el-col>
-              <el-col :span="12">
-                <el-form-item label="宽(px)">
-                  <el-input-number
-                    v-model="formLabelAlign.width"
-                    @input="formItemChange('width', formLabelAlign.width)"
-                    controls-position="right"
-                    size="small"
-                  ></el-input-number>
-                </el-form-item>
+              <el-col :span="12" style="margin-bottom: 10px">
+                <el-button type="primary" @click="positionHandler('left')">左对齐</el-button>
               </el-col>
-              <el-col :span="12">
-                <el-form-item label="高(px)">
-                  <el-input-number
-                    v-model="formLabelAlign.height"
-                    @input="formItemChange('height', formLabelAlign.height)"
-                    controls-position="right"
-                    size="small"
-                  ></el-input-number>
-                </el-form-item>
+              <el-col :span="12" style="margin-bottom: 10px">
+                <el-button type="primary" @click="positionHandler('right')">右对齐</el-button>
               </el-col>
-              <el-col :span="12">
-                <el-form-item label="旋转(°)">
-                  <el-input-number
-                    v-model="formLabelAlign.rotation"
-                    controls-position="right"
-                    size="small"
-                    @input="formItemChange('rotation', formLabelAlign.rotation)"
-                  ></el-input-number>
-                </el-form-item>
-              </el-col>
-              <template
+            </el-row>
+          </template>
+          <template v-else>
+            <div v-show="currentActiveShape">
+              <el-row :gutter="24">
+                <el-col :span="12">
+                  <el-form-item label="X(px)">
+                    <el-input-number
+                      v-model="formLabelAlign.x"
+                      @input="formItemChange('x', formLabelAlign.x)"
+                      controls-position="right"
+                      size="small"
+                    ></el-input-number>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="Y(px)">
+                    <el-input-number
+                      v-model="formLabelAlign.y"
+                      @input="formItemChange('y', formLabelAlign.y)"
+                      controls-position="right"
+                      size="small"
+                    ></el-input-number>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="宽(px)">
+                    <el-input-number
+                      v-model="formLabelAlign.width"
+                      @input="formItemChange('width', formLabelAlign.width)"
+                      controls-position="right"
+                      size="small"
+                    ></el-input-number>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="高(px)">
+                    <el-input-number
+                      v-model="formLabelAlign.height"
+                      @input="formItemChange('height', formLabelAlign.height)"
+                      controls-position="right"
+                      size="small"
+                    ></el-input-number>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="旋转(°)">
+                    <el-input-number
+                      v-model="formLabelAlign.rotation"
+                      controls-position="right"
+                      size="small"
+                      @input="formItemChange('rotation', formLabelAlign.rotation)"
+                    ></el-input-number>
+                  </el-form-item>
+                </el-col>
+                <template
+                  v-if="
+                    currentActiveShape &&
+                    currentActiveShape.attrs &&
+                    currentActiveShape.attrs.nodetype &&
+                    ['textEditor'].includes(currentActiveShape.attrs.nodetype)
+                  "
+                >
+                  <el-col :span="12">
+                    <el-form-item label="颜色">
+                      <el-color-picker
+                        @change="formItemChange('fill', formLabelAlign.fill)"
+                        v-model="formLabelAlign.fill"
+                      ></el-color-picker>
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-form-item label="字体大小">
+                      <el-input-number
+                        v-model="formLabelAlign.fontSize"
+                        controls-position="right"
+                        size="small"
+                        @input="formItemChange('fontSize', formLabelAlign.fontSize)"
+                      ></el-input-number>
+                    </el-form-item>
+                  </el-col>
+                </template>
+              </el-row>
+              <template v-if="currentActiveShape && currentActiveShape.attrs && currentActiveShape.attrs.nodetype">
+                <el-row :gutter="24">
+                  <el-col :span="12">
+                    <el-button size="mini" type="primary" @click="upOrDown('up', currentActiveShape)">
+                      上移一层
+                    </el-button>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-button size="mini" type="primary" @click="upOrDown('down', currentActiveShape)">
+                      下移一层
+                    </el-button>
+                  </el-col>
+                </el-row>
+              </template>
+              <el-row
                 v-if="
                   currentActiveShape &&
                   currentActiveShape.attrs &&
                   currentActiveShape.attrs.nodetype &&
-                  ['textEditor'].includes(currentActiveShape.attrs.nodetype)
+                  ['textEditor', 'linkButton'].includes(currentActiveShape.attrs.nodetype)
                 "
               >
+                <el-form-item label="文字内容">
+                  <el-input
+                    type="textarea"
+                    v-model="formLabelAlign.text"
+                    controls-position="right"
+                    size="small"
+                    @input="formItemChange('text', formLabelAlign.text)"
+                  ></el-input>
+                </el-form-item>
+              </el-row>
+            </div>
+            <!-- 设置背景图片宽，高 -->
+            <div v-show="!currentActiveShape">
+              <el-row :gutter="24">
                 <el-col :span="12">
-                  <el-form-item label="颜色">
-                    <el-color-picker
-                      @change="formItemChange('fill', formLabelAlign.fill)"
-                      v-model="formLabelAlign.fill"
-                    ></el-color-picker>
-                  </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item label="字体大小">
+                  <el-form-item label="宽">
                     <el-input-number
-                      v-model="formLabelAlign.fontSize"
+                      v-model="formLabelAlign.width"
+                      @input="formItemChange('width', formLabelAlign.width)"
                       controls-position="right"
                       size="small"
-                      @input="formItemChange('fontSize', formLabelAlign.fontSize)"
                     ></el-input-number>
                   </el-form-item>
                 </el-col>
-              </template>
-            </el-row>
-            <template v-if="currentActiveShape && currentActiveShape.attrs && currentActiveShape.attrs.nodetype">
-              <el-row :gutter="24">
                 <el-col :span="12">
-                  <el-button size="mini" type="primary" @click="upOrDown('up', currentActiveShape)">上移一层</el-button>
-                </el-col>
-                <el-col :span="12">
-                  <el-button size="mini" type="primary" @click="upOrDown('down', currentActiveShape)">
-                    下移一层
-                  </el-button>
+                  <el-form-item label="高">
+                    <el-input-number
+                      v-model="formLabelAlign.height"
+                      @input="formItemChange('height', formLabelAlign.height)"
+                      controls-position="right"
+                      size="small"
+                    ></el-input-number>
+                  </el-form-item>
                 </el-col>
               </el-row>
-            </template>
-            <el-row
-              v-if="
-                currentActiveShape &&
-                currentActiveShape.attrs &&
-                currentActiveShape.attrs.nodetype &&
-                ['textEditor', 'linkButton'].includes(currentActiveShape.attrs.nodetype)
-              "
-            >
-              <el-form-item label="文字内容">
-                <el-input
-                  type="textarea"
-                  v-model="formLabelAlign.text"
-                  controls-position="right"
-                  size="small"
-                  @input="formItemChange('text', formLabelAlign.text)"
-                ></el-input>
-              </el-form-item>
-            </el-row>
-          </div>
-          <!-- 设置背景图片宽，高 -->
-          <div v-show="!currentActiveShape">
-            <el-row :gutter="24">
-              <el-col :span="12">
-                <el-form-item label="宽">
-                  <el-input-number
-                    v-model="formLabelAlign.width"
-                    @input="formItemChange('width', formLabelAlign.width)"
-                    controls-position="right"
-                    size="small"
-                  ></el-input-number>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="高">
-                  <el-input-number
-                    v-model="formLabelAlign.height"
-                    @input="formItemChange('height', formLabelAlign.height)"
-                    controls-position="right"
-                    size="small"
-                  ></el-input-number>
+            </div>
+            <el-row :gutter="24" v-show="!currentActiveShape">
+              <el-col :span="24">
+                <el-form-item label="背景颜色">
+                  <el-color-picker
+                    @change="backgroundColorChange"
+                    v-model="formLabelAlign.backgroundColor"
+                  ></el-color-picker>
                 </el-form-item>
               </el-col>
             </el-row>
-          </div>
-          <el-row :gutter="24" v-show="!currentActiveShape">
-            <el-col :span="24">
-              <el-form-item label="背景颜色">
-                <el-color-picker
-                  @change="backgroundColorChange"
-                  v-model="formLabelAlign.backgroundColor"
-                ></el-color-picker>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="24" v-if="showBackgroundSetting(currentActiveShape)">
-            <el-col :span="24">
-              <el-form-item label="背景图片">
-                <div class="background_img_container" v-show="formLabelAlign.backgroundImage">
-                  <div class="hover_tips">
-                    <i class="el-icon-delete" @click="deleteImage"></i>
+            <el-row :gutter="24" v-if="showBackgroundSetting(currentActiveShape)">
+              <el-col :span="24">
+                <el-form-item label="背景图片">
+                  <div class="background_img_container" v-show="formLabelAlign.backgroundImage">
+                    <div class="hover_tips">
+                      <i class="el-icon-delete" @click="deleteImage"></i>
+                    </div>
+                    <img :src="formLabelAlign.backgroundImage" alt="" />
                   </div>
-                  <img :src="formLabelAlign.backgroundImage" alt="" />
-                </div>
-                <el-upload action="#" :show-file-list="false" :http-request="imageUploadHandler">
-                  <el-button type="primary">上传背景图片</el-button>
-                </el-upload>
-              </el-form-item>
-            </el-col>
-          </el-row>
+                  <el-upload action="#" :show-file-list="false" :http-request="imageUploadHandler">
+                    <el-button type="primary">上传背景图片</el-button>
+                  </el-upload>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </template>
         </el-form>
       </el-tab-pane>
       <el-tab-pane label="数据" name="second">
@@ -225,7 +245,7 @@
 import { deepClone } from "@/utils/utils.js"
 export default {
   name: "visualizationPropsDetail",
-  props: ["currentActiveShape", "currentActiveProps"],
+  props: ["currentActiveShape", "currentActiveProps", "currentActiveList"],
   data() {
     return {
       activeName: "props",
@@ -259,6 +279,9 @@ export default {
     },
   },
   methods: {
+    positionHandler(type) {
+      this.$emit("positionHandler", type)
+    },
     updatePosition() {
       this.formLabelAlign.x = this.currentActiveShape.x()
       this.formLabelAlign.y = this.currentActiveShape.y()
