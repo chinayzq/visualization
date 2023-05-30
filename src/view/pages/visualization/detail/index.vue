@@ -1116,11 +1116,16 @@ export default {
             this.previewFlag = "edit"
           }
           if (e.keyCode == 46) {
-            if (!this.currentActiveShape) {
+            if (!this.currentActiveShape && !this.currentActiveList.length) {
               this.$message.warning("请选中节点后再删除")
               return
             }
-            this.nodeDeleteHandler(this.currentActiveShape)
+            if (this.currentActiveList.length) {
+              this.nodeDeleteHandler(this.currentActiveList)
+              this.currentActiveList = []
+            } else {
+              this.nodeDeleteHandler([this.currentActiveShape])
+            }
           }
           if (e.ctrlKey && e.keyCode == 67) {
             if (this.currentActiveShape) {
@@ -1277,7 +1282,6 @@ export default {
             const yDiff = startPosition.y + event.evt.pageX - startPoint.x
             this.backgroundTop = xDiff
             this.backgroundLeft = yDiff
-            console.log("xDiff", xDiff)
             $(".konvajs-content").css("top", xDiff)
             $(".konvajs-content").css("left", yDiff)
           })
@@ -1319,7 +1323,7 @@ export default {
       })
       // mouseup的时候取消样式和mousemove事件
       Stage.on("mouseup", (e) => {
-        $(".konvajs-content").css("cursor", "grab")
+        $(".konvajs-content").css("cursor", "default")
         Stage.off("mousemove")
       })
     },
@@ -1593,7 +1597,7 @@ export default {
       // 删除
       document.getElementById("delete-button").addEventListener("click", () => {
         // 销毁节点 清空tr节点
-        this.nodeDeleteHandler(currentShape)
+        this.nodeDeleteHandler([currentShape])
       })
       // 上移一层
       document.getElementById("up-button").addEventListener("click", () => {
@@ -1617,20 +1621,22 @@ export default {
         this.displaySingleNode(currentShape, currentId)
       })
     },
-    nodeDeleteHandler(currentShape) {
-      const { nodetype } = currentShape.attrs
-      console.log("nodetype", nodetype)
-      switch (nodetype) {
-        case "linkButton":
-        case "valueLabel":
-          this.linkButtonAndLabelDelete(currentShape)
-          break
-      }
-      // 记录删除操作
-      this.recallListHandler("delete", null, currentShape)
-      currentShape.destroy()
-      this.tr.nodes([])
-      this.layer.draw()
+    nodeDeleteHandler(nodes) {
+      nodes.forEach((singleNode) => {
+        const { nodetype } = singleNode.attrs
+        console.log("nodetype", nodetype)
+        switch (nodetype) {
+          case "linkButton":
+          case "valueLabel":
+            this.linkButtonAndLabelDelete(singleNode)
+            break
+        }
+        // 记录删除操作
+        this.recallListHandler("delete", null, singleNode)
+        singleNode.destroy()
+        this.tr.nodes([])
+        this.layer.draw()
+      })
     },
     // 初始化Konva
     initKonva(width, height) {

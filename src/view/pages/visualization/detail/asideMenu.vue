@@ -94,10 +94,10 @@ export default {
       console.log("xxx-end", e)
     },
     initMenuList() {
-      // if (location.href.includes("localhost")) {
-      //   this.initOfficialMeterial()
-      //   return
-      // }
+      if (location.href.includes("localhost")) {
+        this.initOfficialMeterial()
+        return
+      }
       this.menuLoading = true
       const requestParams = {
         name: "",

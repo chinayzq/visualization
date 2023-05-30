@@ -177,7 +177,13 @@
                     </div>
                     <img :src="formLabelAlign.backgroundImage" alt="" />
                   </div>
-                  <el-upload action="#" :show-file-list="false" :http-request="imageUploadHandler">
+                  <el-upload
+                    action="#"
+                    ref="upload"
+                    :show-file-list="false"
+                    :http-request="imageUploadHandler"
+                    :before-upload="handledBeforeUpload"
+                  >
                     <el-button type="primary">上传背景图片</el-button>
                   </el-upload>
                 </el-form-item>
@@ -262,6 +268,7 @@ export default {
         targetUrl: "",
         backgroundColor: "#F2F2F2",
       },
+      uploadImage: {},
     }
   },
   watch: {
@@ -315,6 +322,27 @@ export default {
         datas: color,
       })
     },
+    handledBeforeUpload(file) {
+      //重点
+      const uploaded = new Promise((resolve, reject) => {
+        let img = new Image()
+        img.onload = function () {
+          resolve(img)
+        }
+        img.src = URL.createObjectURL(file)
+      }).then(
+        (res) => {
+          this.uploadImage.width = res.width
+          this.uploadImage.height = res.height
+          console.log("this.uploadImage1", this.uploadImage)
+          return true
+        },
+        (err) => {
+          return Promise.reject()
+        }
+      )
+      return uploaded
+    },
     imageUploadHandler(data) {
       this.getBase64(data.file).then((resBase64) => {
         if (this.currentActiveShape) {
@@ -331,6 +359,9 @@ export default {
             type: "image",
             datas: resBase64,
           })
+          console.log("this.uploadImage2", this.uploadImage)
+          this.$emit("setBackground", { type: "width", datas: this.uploadImage.width })
+          this.$emit("setBackground", { type: "height", datas: this.uploadImage.height })
         }
         // 设置图片并设置默认宽高的尺寸
         // _this.formLabelAlign.backgroundImage = resBase64;
