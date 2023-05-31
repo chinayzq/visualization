@@ -3,6 +3,7 @@
     <el-tabs v-model="activeName">
       <el-tab-pane label="外观" name="props">
         <el-form label-position="top" label-width="100%" :model="formLabelAlign">
+          <!-- 多选时 -->
           <template v-if="currentActiveList.length">
             <el-row :gutter="24">
               <el-col :span="12" style="margin-bottom: 10px">
@@ -194,6 +195,27 @@
       </el-tab-pane>
       <el-tab-pane label="数据" name="second">
         <el-form label-position="top" label-width="100%" :model="formLabelAlign">
+          <!-- 按钮素材 -->
+          <el-row :gutter="24" v-if="currentActiveShape && currentActiveShape.attrs && currentActiveShape.attrs.catelog === 'button'">
+            <el-col :span="24">
+              <el-form-item label="跳转地址">
+                <el-input
+                  v-model="formLabelAlign.buttonUrl"
+                  @input="dataItemChange('buttonUrl', formLabelAlign.buttonUrl)"
+                  size="small"
+                ></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="24">
+              <el-form-item label="激活ID">
+                <el-input
+                  v-model="formLabelAlign.buttonActiveId"
+                  @input="dataItemChange('buttonActiveId', formLabelAlign.buttonActiveId)"
+                  size="small"
+                ></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
           <el-row :gutter="24">
             <el-form-item
               label="传感器ID(sensorId)"
@@ -201,6 +223,7 @@
                 currentActiveShape &&
                 currentActiveShape.attrs &&
                 currentActiveShape.attrs.nodetype &&
+                currentActiveShape.attrs.catelog !== 'button' &&
                 ['businessNode', 'valueLabel'].includes(currentActiveShape.attrs.nodetype)
               "
             >
@@ -267,6 +290,8 @@ export default {
         sensorPoint: "",
         targetUrl: "",
         backgroundColor: "#F2F2F2",
+        buttonUrl: "",
+        buttonActiveId: "",
       },
       uploadImage: {},
     }

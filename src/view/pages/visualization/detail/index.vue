@@ -100,6 +100,7 @@ import { encrypt2RSA } from "@/utils/encrypt"
 import { deepClone } from "@/utils/utils.js"
 import lodash from "lodash"
 import "@/utils/gifler.js"
+import { getUrlParams } from "@/utils/utils.js"
 // import Konva from "konva"
 import {
   getVisualizationDetail,
@@ -118,6 +119,7 @@ export default {
   mixins: [konvaMixins],
   data() {
     return {
+      buttonDatas:{},
       dragFlag: false,
       animators: [],
       animationId: null,
@@ -339,29 +341,9 @@ export default {
       this.allNodeDatas = TheLayer.children
       const ImageNodes = TheLayer.children.filter((item) => item.className === "Image" || item.className === "Text")
       ImageNodes.forEach((item) => {
-        console.log("xxxx-item", item)
         this.displaySingleNode(item)
       })
-      // let displayList = []
-      // ImageNodes.forEach((item) => displayList.push(this.displaySingleNode(item)))
-      // console.log("xxxx2")
-      // Promise.all(displayList)
-      //   .then(() => {
-      //     this.layer.draw()
-      //     this.graphLoading = false
-      //   })
-      //   .catch(() => {
-      //     this.$message.warning("场景渲染失败！")
-      //     this.graphLoading = false
-      //   })
       this.graphLoading = false
-      // window.cancelAnimationFrame(this.animationId)
-      // this.animationId = null
-      // this.storeDatas = this.dealRequestParams()
-      // setTimeout(() => {
-      //   this.redrawGif()
-      //   this.graphLoading = false
-      // }, 1000);
     },
     textEditorRender(item, newId) {
       const { height, width, x, y, text, id, fontSize, fill } = item || {}
@@ -758,7 +740,7 @@ export default {
     },
     // 渲染单个自定义节点
     displaySingleNode({ attrs }, newId) {
-      const { icon, x, y, backgroundImage, height, width, rotation, text, nodetype, statusList, sensorId } = attrs
+      const { icon, x, y, backgroundImage, height, width, rotation, text, nodetype, statusList, sensorId, catelog, buttonUrl, buttonActiveId  } = attrs
       // return new Promise((resolve, reject) => {
       try {
         if (nodetype === "textEditor") {
@@ -794,6 +776,9 @@ export default {
             statusList,
             sensorId: newId ? "" : sensorId,
             icon,
+            catelog,
+            buttonUrl, 
+            buttonActiveId
           })
           Image.on("dragstart", () => {
             this.dragStartHandler(currentId, {
@@ -831,6 +816,7 @@ export default {
             const { basicData, detail } = res.data
             const displayDatas = JSON.parse(JSON.parse(detail))
             console.log("displayDatas1", displayDatas)
+            this.storeButtonsDatas(displayDatas)
             console.log("displayDatas2", basicData)
             this.displayHandler(basicData, displayDatas)
             this.saveDialog.name = res.data.name
@@ -845,8 +831,44 @@ export default {
           if (this.$route.query.viewMode === "detail") {
             this.dataFreshHandler()
             this.startFreshInterval()
+            this.setActiveButtons()
           }
         })
+    },
+    storeButtonsDatas(displayDatas) {
+      // 数据存储格式
+      // this.buttonDatas = {
+      // id: {
+      //   buttonActiveId: 1,
+      //   statusList: {
+      //     1: 'imageSrc1',
+      //     2: 'imageSrc2'
+      //   }
+      // }
+      // }
+      const { children } = displayDatas
+      children[0].children.forEach((item) => {
+        const { catelog, id, buttonActiveId, statusList } = item.attrs
+        if (catelog === "button") {
+          this.buttonDatas[id] = {
+            buttonActiveId,
+            statusList,
+          }
+        }
+      })
+    },
+    setActiveButtons() {
+      debugger
+      const allButtonIds = Object.keys(this.buttonDatas)
+      const currentId = getUrlParams().id || ""
+      if (!allButtonIds.length || !currentId) return
+      allButtonIds.forEach((buttonId) => {
+        const currentNode = this.findNodeById(buttonId)
+        currentNode.attrs.icon =
+          currentNode.attrs.buttonActiveId == currentId ? this.buttonDatas[buttonId].statusList[2] : this.buttonDatas[buttonId].statusList[1]
+        // 更新图片
+        this.changeSingleNode(currentNode)
+      })
     },
     startFreshInterval() {
       this.intervalInstance = window.setInterval(() => {
@@ -1229,10 +1251,15 @@ export default {
     },
     // detail模式下businessNode点击事件
     detailClickHandler(node) {
-      const { nodetype, targetUrl, sensorId, icon } = node.attrs || {}
+      const { nodetype, targetUrl, sensorId, icon, catelog, buttonUrl } = node.attrs || {}
+      // 按钮素材点击事件
+      if (catelog === 'button') {
+        window.open(buttonUrl, "_self")
+        location.reload()
+        return
+      }
       switch (nodetype) {
         case "linkButton":
-          debugger
           window.open(targetUrl, "_self")
           break
         case "businessNode":
@@ -1243,6 +1270,7 @@ export default {
           }
           break
       }
+      
     },
     // 点击&拖拽事件处理
     initClickHandler(Stage) {
@@ -1510,9 +1538,9 @@ export default {
       const currentDrogNode = deepClone(this.currentDragItem)
       currentDrogNode.height = Number(currentDrogNode.height)
       currentDrogNode.width = Number(currentDrogNode.width)
-      const { icon, nodetype, text, height, width, item } = currentDrogNode
+      const { icon, nodetype, text, height, width, item, catelog } = currentDrogNode
       currentDrogNode.id = this.GenNonDuplicateID()
-      // 记录新增节点操作
+      // 记录 作
       this.recallListHandler("drop", currentDrogNode.id)
       const currentItem = JSON.parse(item)
       if (nodetype === "textEditor") {
@@ -1543,6 +1571,7 @@ export default {
               rotation: 0,
               backgroundImage: "",
               statusList: currentItem.detail.statusList,
+              catelog,
               nodetype: "businessNode",
             })
             Image.on("dragstart", () => {

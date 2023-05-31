@@ -49,6 +49,7 @@
           :data-backgroundImage="item.backgroundImage"
           :data-index="item.index"
           :data-text="item.text"
+          :data-catelog="item.catelog"
           :data-item="JSON.stringify(item)"
         >
           <el-tooltip :content="item.name" placement="bottom" effect="light">
@@ -75,6 +76,7 @@ export default {
       leftMenuList: [
         { name: "基础库", count: 0, type: "basic" },
         { name: "自定义", count: 0, type: "custom" },
+        { name: "按钮素材", count: 0, type: "button" },
       ],
       MenuList: {},
       currentActiveType: "basic",
@@ -94,10 +96,10 @@ export default {
       console.log("xxx-end", e)
     },
     initMenuList() {
-      if (location.href.includes("localhost")) {
-        this.initOfficialMeterial()
-        return
-      }
+      // if (location.href.includes("localhost")) {
+      //   this.initOfficialMeterial()
+      //   return
+      // }
       this.menuLoading = true
       const requestParams = {
         name: "",
@@ -121,6 +123,7 @@ export default {
               detail,
               icon: detail.statusList[detail.default],
               name: item.name,
+              catelog: item.catelog,
               busiType: "basicComponent",
               nodetype: "text",
               height: 100,

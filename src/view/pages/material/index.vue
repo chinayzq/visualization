@@ -62,6 +62,10 @@ export default {
           label: "自定义",
           value: "custom",
         },
+        {
+          label: "按钮素材",
+          value: "button",
+        },
         // {
         //   label: "基础类型",
         //   value: "basic",
