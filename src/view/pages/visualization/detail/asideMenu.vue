@@ -84,6 +84,8 @@ export default {
     }
   },
   created() {
+    const { viewMode } = this.$route.query
+    if (this.$route.query.viewMode === "detail") return
     this.initMenuList()
   },
   methods: {

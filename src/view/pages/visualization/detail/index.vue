@@ -119,7 +119,7 @@ export default {
   mixins: [konvaMixins],
   data() {
     return {
-      buttonDatas:{},
+      buttonDatas: {},
       dragFlag: false,
       animators: [],
       animationId: null,
@@ -740,7 +740,22 @@ export default {
     },
     // 渲染单个自定义节点
     displaySingleNode({ attrs }, newId) {
-      const { icon, x, y, backgroundImage, height, width, rotation, text, nodetype, statusList, sensorId, catelog, buttonUrl, buttonActiveId  } = attrs
+      const {
+        icon,
+        x,
+        y,
+        backgroundImage,
+        height,
+        width,
+        rotation,
+        text,
+        nodetype,
+        statusList,
+        sensorId,
+        catelog,
+        buttonUrl,
+        buttonActiveId,
+      } = attrs
       // return new Promise((resolve, reject) => {
       try {
         if (nodetype === "textEditor") {
@@ -777,8 +792,8 @@ export default {
             sensorId: newId ? "" : sensorId,
             icon,
             catelog,
-            buttonUrl, 
-            buttonActiveId
+            buttonUrl,
+            buttonActiveId,
           })
           Image.on("dragstart", () => {
             this.dragStartHandler(currentId, {
@@ -865,7 +880,9 @@ export default {
       allButtonIds.forEach((buttonId) => {
         const currentNode = this.findNodeById(buttonId)
         currentNode.attrs.icon =
-          currentNode.attrs.buttonActiveId == currentId ? this.buttonDatas[buttonId].statusList[2] : this.buttonDatas[buttonId].statusList[1]
+          currentNode.attrs.buttonActiveId == currentId
+            ? this.buttonDatas[buttonId].statusList[2]
+            : this.buttonDatas[buttonId].statusList[1]
         // 更新图片
         this.changeSingleNode(currentNode)
       })
@@ -1253,7 +1270,7 @@ export default {
     detailClickHandler(node) {
       const { nodetype, targetUrl, sensorId, icon, catelog, buttonUrl } = node.attrs || {}
       // 按钮素材点击事件
-      if (catelog === 'button') {
+      if (catelog === "button") {
         window.open(buttonUrl, "_self")
         location.reload()
         return
@@ -1270,7 +1287,6 @@ export default {
           }
           break
       }
-      
     },
     // 点击&拖拽事件处理
     initClickHandler(Stage) {
@@ -1353,6 +1369,18 @@ export default {
       Stage.on("mouseup", (e) => {
         $(".konvajs-content").css("cursor", "default")
         Stage.off("mousemove")
+      })
+      this.layer.on("mouseover", (evt) => {
+        let shape = evt.target
+        const { nodetype } = shape.attrs || {}
+        if (this.$route.query.viewMode === "detail" && ["businessNode", "linkButton"].includes(nodetype)) {
+          document.body.style.cursor = "pointer"
+        }
+      })
+      this.layer.on("mouseout", () => {
+        if (this.$route.query.viewMode === "detail") {
+          document.body.style.cursor = "default"
+        }
       })
     },
     // 双击事件
